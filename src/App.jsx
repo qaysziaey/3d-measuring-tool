@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { CanvasContainer } from './components/CanvasContainer';
-import { Ruler, CheckCircle, RotateCcw, CircleDashed, Lock, Unlock, Settings2, Plus, Minus, UserRound, ChevronUp, ChevronDown, Eye, EyeOff, Maximize, ZoomIn, Download, X, Ghost } from 'lucide-react';
+import { Ruler, CheckCircle, RotateCcw, CircleDashed, Lock, Unlock, Settings2, Plus, Minus, UserRound, ChevronUp, ChevronDown, Eye, EyeOff, Maximize, ZoomIn, Download, X, Ghost, Sun, Moon } from 'lucide-react';
 import * as THREE from 'three';
 import './App.css';
 
@@ -56,7 +56,13 @@ function App() {
   const [measurements, setMeasurements] = useState(initialMeasurements);
   const [activeId, setActiveId] = useState(null);
   const [activeEditId, setActiveEditId] = useState(null);
-  const [collapsedCategories, setCollapsedCategories] = useState({});
+  
+  // Initialize all categories as collapsed by default
+  const [collapsedCategories, setCollapsedCategories] = useState(() => {
+    const cats = [...new Set(initialMeasurements.map(m => m.category))];
+    return cats.reduce((acc, cat) => ({ ...acc, [cat]: true }), {});
+  });
+
   const [showLabels, setShowLabels] = useState(true);
   const [modelScale, setModelScale] = useState(1.6);
   const [zoom, setZoom] = useState(12);
@@ -70,6 +76,13 @@ function App() {
   const [tempPoints, setTempPoints] = useState([]); // Now supports multiple capturing points
   const [showSummary, setShowSummary] = useState(false);
   const [isTransparent, setIsTransparent] = useState(false); 
+  const [theme, setTheme] = useState(() => localStorage.getItem('theme') || 'light');
+
+  const toggleTheme = () => {
+    const newTheme = theme === 'light' ? 'dark' : 'light';
+    setTheme(newTheme);
+    localStorage.setItem('theme', newTheme);
+  };
 
   const activeMeasurement = measurements.find(m => m.id === activeId);
   const allCompleted = measurements.every(m => m.completed);
@@ -336,11 +349,30 @@ function App() {
   );
 
   return (
-    <div className="app-container">
-      <div className="sidebar glass-panel fade-in">
-        <div className="sidebar-header">
-          <h1>Anatomy Metrics</h1>
-          <p>Extensive Anthropometric Data Modeling</p>
+    <div className={`app-container ${theme === 'dark' ? 'dark' : ''}`}>
+      <div className="sidebar fade-in">
+        <div className="sidebar-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+          <div>
+            <h1 style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <UserRound size={24} color="var(--accent-primary)" />
+              Anthropometric Workstation
+            </h1>
+            <p>Surgical-grade 3D measurement suite for clinical body analysis.</p>
+          </div>
+          <button 
+            className="btn-icon theme-toggle" 
+            onClick={toggleTheme}
+            style={{ 
+              background: 'var(--border-light)', 
+              border: 'none', 
+              borderRadius: '8px', 
+              padding: '8px',
+              cursor: 'pointer',
+              color: 'var(--text-main)'
+            }}
+          >
+            {theme === 'light' ? <Moon size={18} /> : <Sun size={18} />}
+          </button>
         </div>
 
         <div className={`status-indicator ${activeId ? 'measuring' : ''}`}>
@@ -445,7 +477,18 @@ function App() {
 
         <button
           className="btn btn-primary"
-          style={{ marginTop: 'auto', padding: '12px', flexShrink: 0 }}
+          style={{ 
+            marginTop: 'auto', 
+            padding: '12px', 
+            flexShrink: 0,
+            background: 'var(--accent-primary)',
+            color: 'white',
+            border: 'none',
+            borderRadius: '12px',
+            fontWeight: '600',
+            cursor: 'pointer',
+            boxShadow: '0 4px 12px rgba(86, 164, 50, 0.2)'
+          }}
           disabled={!measurements.some(m => m.completed)}
           onClick={() => setShowSummary(true)}
         >
@@ -471,16 +514,16 @@ function App() {
           cameraTargetY={cameraTargetY}
           onSelectMeasurement={handleSelectMeasurement}
           isTransparent={isTransparent}
+          theme={theme}
         />
       </div>
 
-      <div className="right-sidebar fade-in">
-        <div className="view-config glass-panel">
-          <div className="view-config-header">
-            <Maximize size={14} /> View Configuration
-          </div>
+      <div className="view-config glass-panel fade-in" style={{ width: '260px', flexShrink: 0 }}>
+        <div className="view-config-header">
+          <Maximize size={14} /> View Configuration
+        </div>
 
-          <div className="view-config-body">
+        <div className="view-config-body">
             <div className="config-row">
               <span className="config-label">Model Height</span>
               <input
@@ -533,6 +576,17 @@ function App() {
             </div>
 
               <div className="config-row" style={{ marginTop: '4px' }}>
+                <span className="config-label">Annotation Labels</span>
+                <button 
+                  className={`lock-axis-btn ${showLabels ? 'locked' : ''}`}
+                  onClick={() => setShowLabels(!showLabels)}
+                  title="Toggle Visibility of 3D Measurement Tags"
+                >
+                  {showLabels ? <Eye size={14} /> : <EyeOff size={14} />}
+                </button>
+              </div>
+
+              <div className="config-row" style={{ marginTop: '4px' }}>
                 <span className="config-label">X-Ray Mode</span>
                 <button 
                   className={`lock-axis-btn ${isTransparent ? 'locked' : ''}`}
@@ -558,17 +612,6 @@ function App() {
             </div>
           </div>
         </div>
-
-        <div style={{ marginTop: 'auto' }} className="floating-controls-inner">
-          <button
-            className={`floating-btn ${showLabels ? 'unlocked' : 'locked'}`}
-            onClick={() => setShowLabels(!showLabels)}
-          >
-            {showLabels ? <Eye size={16} /> : <EyeOff size={16} />}
-            {showLabels ? "Hide Labels" : "Show Labels"}
-          </button>
-        </div>
-      </div>
 
       {showSummary && (
         <div className="modal-overlay fade-in">

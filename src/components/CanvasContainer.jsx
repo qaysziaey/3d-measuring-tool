@@ -99,7 +99,8 @@ export function CanvasContainer({
   unit = 'cm',
   cameraTargetY = 0,
   onSelectMeasurement,
-  isTransparent 
+  isTransparent,
+  theme = 'light' 
 }) {
   const [hoverData, setHoverData] = useState(null);
   const orbitRef = useRef();
@@ -211,7 +212,7 @@ export function CanvasContainer({
     <Canvas
       shadows
       camera={{ position: [0, 2, 8], fov: 45 }}
-      style={{ background: '#f3f4f6' }}
+      style={{ background: theme === 'dark' ? '#0a0a0a' : '#f3f4f6' }}
     >
       <ambientLight intensity={0.8} />
       <directionalLight position={[5, 10, 5]} intensity={1.5} castShadow shadow-mapSize-width={1024} shadow-mapSize-height={1024} />
