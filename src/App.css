@@ -30,7 +30,7 @@
   background: white;
   border-radius: 24px;
   border: 1px solid var(--border-medium);
-  box-shadow: 0 4px 24px rgba(0,0,0,0.04);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.04);
   overflow: hidden;
   z-index: 1;
 }
@@ -100,7 +100,7 @@
 
 .measurement-item.active {
   background: #f0fdf4;
-  border-color: #86efac;
+  border-color: #56a432;
 }
 
 .measurement-item.completed {
@@ -145,7 +145,7 @@
 
 .status-indicator.measuring {
   background: #ccfbf1;
-  border-color: #5eead4;
+  border-color: #56a432;
   color: var(--accent-hover);
 }
 
@@ -180,7 +180,8 @@
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  flex-wrap: wrap; /* Added for responsiveness */
+  flex-wrap: wrap;
+  /* Added for responsiveness */
 }
 
 .config-label {
@@ -239,12 +240,19 @@ input[type="range"] {
 .unit-btn.active {
   background: white;
   color: var(--accent-primary);
-  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .fade-in {
@@ -343,7 +351,7 @@ input[type="range"] {
   background: var(--glass-bg);
   backdrop-filter: var(--glass-blur);
   border: var(--glass-border);
-  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
   transition: all 0.2s;
   color: var(--text-primary);
   width: fit-content;
@@ -351,7 +359,7 @@ input[type="range"] {
 
 .floating-btn:hover {
   transform: translateX(-2px);
-  box-shadow: 0 6px 16px rgba(0,0,0,0.08);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
 }
 
 .floating-btn.locked {
@@ -468,9 +476,11 @@ input[type="range"] {
     padding: 12px;
     gap: 12px;
   }
+
   .sidebar {
     width: 280px;
   }
+
   .right-sidebar {
     width: 220px;
   }
@@ -484,13 +494,16 @@ input[type="range"] {
     padding: 16px;
     gap: 16px;
   }
-  .sidebar, .right-sidebar {
+
+  .sidebar,
+  .right-sidebar {
     width: 100%;
     max-width: 100%;
     height: auto;
     max-height: 400px;
     flex: 1 1 100%;
   }
+
   .canvas-wrapper {
     width: 100%;
     height: 60vh;
@@ -506,9 +519,11 @@ input[type="range"] {
     align-items: flex-start;
     gap: 8px;
   }
+
   .config-row input[type="range"] {
     width: 100% !important;
   }
+
   .sidebar-header h1 {
     font-size: 18px;
   }

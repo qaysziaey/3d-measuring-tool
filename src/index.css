@@ -6,9 +6,9 @@
   --border-light: #e5e7eb;
   --border-medium: #d1d5db;
   --accent-light: #ccfbf1;
-  --accent-primary: #14b8a6;
-  --accent-hover: #0d9488;
-  --blue-line: #3b82f6;
+  --accent-primary: #56a432;
+  --accent-hover: #a3d97e;
+  --blue-line: #56a432;
   --glass-bg: rgba(255, 255, 255, 0.85);
   --glass-blur: blur(16px);
   --glass-border: 1px solid rgba(0, 0, 0, 0.08);
@@ -30,7 +30,10 @@ body {
 }
 
 /* Typography Utilities */
-h1, h2, h3, h4 {
+h1,
+h2,
+h3,
+h4 {
   font-weight: 600;
   letter-spacing: -0.02em;
 }

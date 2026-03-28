@@ -28,10 +28,10 @@ export function CustomModel({ onPointerDown, onPointerMove, onPointerOut, scale 
   }, [scene, isTransparent]);
 
   return (
-    <primitive 
-      object={scene} 
-      position={[0, -scale * 0.8, 0]} 
-      scale={scale} 
+    <primitive
+      object={scene}
+      position={[0, -scale * 0.8, 0]}
+      scale={scale}
       onPointerDown={onPointerDown}
       onPointerMove={onPointerMove}
       onPointerOut={onPointerOut}
