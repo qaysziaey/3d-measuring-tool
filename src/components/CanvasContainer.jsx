@@ -46,36 +46,39 @@ function ContourRing({ id, center, radius, label, color = "#14b8a6", showLabel =
         opacity={0.8}
       />
       
-      {showLabel && (
-          <Html position={[center.x + r, center.y, center.z]} center distanceFactor={4} zIndexRange={[100, 0]}>
+        {showLabel && (
+          <Html position={[center.x + r, center.y, center.z]} center distanceFactor={8} zIndexRange={[100, 0]}>
             <div style={{
               background: '#ffffff',
-              padding: '2px 4px',
-              borderRadius: '4px',
+              padding: '1px 2px',
+              borderRadius: '2px',
               border: '1px solid #e5e7eb',
-              boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+              boxShadow: '0 1px 2px rgba(0,0,0,0.1)',
               color: '#000000',
-              fontSize: '9px',
+              fontSize: '7px',
               fontWeight: '600',
               pointerEvents: 'none',
-              transform: 'translate3d(10px, 0, 0)',
               whiteSpace: 'nowrap'
             }}>
               {label ? label : `Curve: ${formatLabel(exactCircumference * 15)} ${unit}`}
             </div>
           </Html>
-      )}
+        )}
     </group>
   );
 }
 
-function CursorFollower({ tempPoint }) {
-  if (!tempPoint) return null;
+function CursorFollower({ tempPoints }) {
+  if (!tempPoints || tempPoints.length === 0) return null;
   return (
-    <mesh position={tempPoint}>
-      <sphereGeometry args={[0.08, 16, 16]} />
-      <meshBasicMaterial color="#ef4444" depthTest={false} transparent opacity={0.8} />
-    </mesh>
+    <>
+      {tempPoints.map((pt, i) => (
+        <mesh key={i} position={pt}>
+          <sphereGeometry args={[0.015, 16, 16]} />
+          <meshBasicMaterial color="#ef4444" depthTest={false} transparent opacity={1} />
+        </mesh>
+      ))}
+    </>
   );
 }
 
@@ -83,7 +86,7 @@ function CursorFollower({ tempPoint }) {
 export function CanvasContainer({ 
   measurements, 
   activeMeasurement, 
-  tempPoint, 
+  tempPoints, 
   onPointClick,
   onCurveCapture,
   horizRotation,
@@ -95,7 +98,8 @@ export function CanvasContainer({
   zoom,
   unit = 'cm',
   cameraTargetY = 0,
-  onSelectMeasurement
+  onSelectMeasurement,
+  isTransparent 
 }) {
   const [hoverData, setHoverData] = useState(null);
   const orbitRef = useRef();
@@ -142,11 +146,8 @@ export function CanvasContainer({
     e.stopPropagation();
     if (!activeMeasurement) return;
 
-    if (activeMeasurement.type === 'circumference' && hoverData) {
-      onCurveCapture(hoverData.center, hoverData.radius);
-    } else if (activeMeasurement.type === 'distance') {
-      onPointClick(e.point.toArray());
-    }
+    // We now unify all 3D capturing through onPointClick (handles 2-point and 3-point scans)
+    onPointClick(e.point.toArray());
   };
 
   const handlePointerMove = (e) => {
@@ -222,6 +223,7 @@ export function CanvasContainer({
           onPointerMove={handlePointerMove}
           onPointerOut={handlePointerOut}
           scale={modelScale}
+          isTransparent={isTransparent}
         />
       </Suspense>
 
@@ -260,11 +262,11 @@ export function CanvasContainer({
       })}
       
       {/* Dynamic Procedural Hover Math rendering */}
-      {activeIsCurve && hoverData && (
+      {activeIsCurve && hoverData && tempPoints.length === 0 && (
           <ContourRing center={hoverData.center} radius={hoverData.radius} showLabel={showLabels} unit={unit} />
       )}
       
-      {tempPoint && <CursorFollower tempPoint={tempPoint} />}
+      {tempPoints && <CursorFollower tempPoints={tempPoints} />}
 
       <OrbitControls 
         ref={orbitRef}

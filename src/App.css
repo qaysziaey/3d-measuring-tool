@@ -1,10 +1,14 @@
 :root {
-  --text-primary: #1d1d1f;
-  --text-secondary: #86868b;
   --accent-primary: #56a432;
   --accent-hover: #4a8d2b;
-  --border-light: #f5f5f7;
-  --border-medium: #d2d2d7;
+  --bg-app: #f1f5f9;
+  --bg-card: rgba(255, 255, 255, 0.95);
+  --border-light: #e2e8f0;
+  --border-medium: #cbd5e1;
+  --text-main: #0f172a;
+  --text-secondary: #64748b;
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1);
   --glass-bg: rgba(255, 255, 255, 0.7);
   --glass-blur: blur(20px);
   --glass-border: 1px solid rgba(0, 0, 0, 0.1);
@@ -32,12 +36,13 @@
 }
 
 .sidebar {
-  width: 340px;
+  width: 320px;
+  max-width: 25%;
   height: 100%;
   display: flex;
   flex-direction: column;
   gap: 20px;
-  padding: 24px;
+  padding: 20px;
   border-radius: 20px;
   background: white;
   border: 1px solid var(--border-medium);
@@ -145,52 +150,52 @@
 }
 
 .view-config {
-  background: #ffffff;
+  background: white;
   border-radius: 12px;
-  border: 1px solid var(--border-light);
   overflow: hidden;
-  margin-bottom: 8px;
+  box-shadow: var(--shadow-md);
+  margin-bottom: 24px;
 }
 
 .view-config-header {
-  padding: 10px 16px;
-  background: #f9fafb;
+  padding: 12px 16px;
+  background: #f8fafc;
   border-bottom: 1px solid var(--border-light);
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  font-size: 13px;
   font-weight: 600;
-  cursor: pointer;
-  color: var(--text-primary);
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .view-config-body {
-  padding: 12px 16px;
+  padding: 16px;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 16px;
 }
 
 .config-row {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 12px;
+  flex-wrap: wrap; /* Added for responsiveness */
 }
 
 .config-label {
-  font-size: 12px;
+  font-size: 11px;
   color: var(--text-secondary);
-  min-width: 80px;
+  font-weight: 500;
+  min-width: 70px;
+  flex: 1;
 }
 
-.config-row input[type="range"] {
-  flex: 1;
+input[type="range"] {
   height: 4px;
-  background: #e5e7eb;
+  background: var(--border-light);
   border-radius: 2px;
   appearance: none;
-  cursor: pointer;
 }
 
 .config-row input[type="range"]::-webkit-slider-thumb {
@@ -306,9 +311,10 @@
 }
 
 .right-sidebar {
-  width: 280px;
+  width: 260px;
+  max-width: 20%;
   height: 100%;
-  padding: 24px;
+  padding: 20px;
   display: flex;
   flex-direction: column;
   gap: 16px;
@@ -456,4 +462,54 @@
   background: #ccfbf1;
 }
 
+/* Responsive Breakpoints */
+@media (max-width: 1300px) {
+  .app-container {
+    padding: 12px;
+    gap: 12px;
+  }
+  .sidebar {
+    width: 280px;
+  }
+  .right-sidebar {
+    width: 220px;
+  }
+}
 
+@media (max-width: 1024px) {
+  .app-container {
+    flex-wrap: wrap;
+    height: auto;
+    overflow-y: auto;
+    padding: 16px;
+    gap: 16px;
+  }
+  .sidebar, .right-sidebar {
+    width: 100%;
+    max-width: 100%;
+    height: auto;
+    max-height: 400px;
+    flex: 1 1 100%;
+  }
+  .canvas-wrapper {
+    width: 100%;
+    height: 60vh;
+    min-height: 400px;
+    order: -1;
+    flex: 1 1 100%;
+  }
+}
+
+@media (max-width: 600px) {
+  .config-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+  .config-row input[type="range"] {
+    width: 100% !important;
+  }
+  .sidebar-header h1 {
+    font-size: 18px;
+  }
+}

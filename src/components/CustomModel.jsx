@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 import { useGLTF } from '@react-three/drei';
 import * as THREE from 'three';
 
-export function CustomModel({ onPointerDown, onPointerMove, onPointerOut, scale = 2.2 }) {
+export function CustomModel({ onPointerDown, onPointerMove, onPointerOut, scale = 2.2, isTransparent = false }) {
   // Leverages bleeding-edge GLTF mapping pulling internal animations, armatures, and rigged bones efficiently
   const { scene } = useGLTF('/new-rigg.glb');
 
@@ -16,14 +16,16 @@ export function CustomModel({ onPointerDown, onPointerMove, onPointerOut, scale 
             color: '#9ca3af',
             roughness: 0.6,
             metalness: 0.1,
-            side: THREE.DoubleSide
+            side: THREE.DoubleSide,
+            transparent: isTransparent,
+            opacity: isTransparent ? 0.3 : 1
           });
-          child.castShadow = true;
-          child.receiveShadow = true;
+          child.castShadow = !isTransparent;
+          child.receiveShadow = !isTransparent;
         }
       });
     }
-  }, [scene]);
+  }, [scene, isTransparent]);
 
   return (
     <primitive 

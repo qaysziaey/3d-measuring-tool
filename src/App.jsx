@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { CanvasContainer } from './components/CanvasContainer';
-import { Ruler, CheckCircle, RotateCcw, CircleDashed, Lock, Unlock, Settings2, Plus, Minus, UserRound, ChevronUp, ChevronDown, Eye, EyeOff, Maximize, ZoomIn, Download } from 'lucide-react';
+import { Ruler, CheckCircle, RotateCcw, CircleDashed, Lock, Unlock, Settings2, Plus, Minus, UserRound, ChevronUp, ChevronDown, Eye, EyeOff, Maximize, ZoomIn, Download, X, Ghost } from 'lucide-react';
 import * as THREE from 'three';
 import './App.css';
 
@@ -38,6 +38,18 @@ const initialMeasurements = [
   { id: 'rightCalf', category: 'Legs', name: 'Right Calf (Max Girth)', type: 'circumference', targetBones: ['rightleg'], value: null, center: null, radius: null, completed: false },
   { id: 'leftAnkle', category: 'Legs', name: 'Left Ankle (Min Girth)', type: 'circumference', targetBones: ['leftleg', 'leftfoot'], value: null, center: null, radius: null, completed: false },
   { id: 'rightAnkle', category: 'Legs', name: 'Right Ankle (Min Girth)', type: 'circumference', targetBones: ['rightleg', 'rightfoot'], value: null, center: null, radius: null, completed: false },
+
+  // Hands & Feet
+  { id: 'leftHand', category: 'Hands & Feet', name: 'Left Hand Length', type: 'distance', targetBones: ['lefthand', 'leftmiddle'], value: null, startPoint: null, endPoint: null, completed: false },
+  { id: 'rightHand', category: 'Hands & Feet', name: 'Right Hand Length', type: 'distance', targetBones: ['righthand', 'rightmiddle'], value: null, startPoint: null, endPoint: null, completed: false },
+  { id: 'leftFootLen', category: 'Hands & Feet', name: 'Left Foot Length', type: 'distance', targetBones: ['leftfoot', 'lefttoe'], value: null, startPoint: null, endPoint: null, completed: false },
+  { id: 'rightFootLen', category: 'Hands & Feet', name: 'Right Foot Length', type: 'distance', targetBones: ['rightfoot', 'righttoe'], value: null, startPoint: null, endPoint: null, completed: false },
+  { id: 'leftFootHeight', category: 'Hands & Feet', name: 'Left Foot Height', type: 'distance', targetBones: ['leftfoot', 'leftleg'], value: null, startPoint: null, endPoint: null, completed: false },
+  { id: 'rightFootHeight', category: 'Hands & Feet', name: 'Right Foot Height', type: 'distance', targetBones: ['rightfoot', 'rightleg'], value: null, startPoint: null, endPoint: null, completed: false },
+
+  // Head & Neck Extensions
+  { id: 'headCirc', category: 'Head & Face', name: 'Head Circumference', type: 'circumference', targetBones: ['head'], value: null, center: null, radius: null, completed: false },
+  { id: 'faceLen', category: 'Head & Face', name: 'Total Face Length', type: 'distance', targetBones: ['head'], value: null, startPoint: null, endPoint: null, completed: false },
 ];
 
 function App() {
@@ -55,8 +67,9 @@ function App() {
   const [vertRotation, setVertRotation] = useState(Math.PI / 2); // 90 degrees (facing center)
   const [lockState, setLockState] = useState({ horiz: false, vert: false });
   
-  const [tempPoint, setTempPoint] = useState(null);
+  const [tempPoints, setTempPoints] = useState([]); // Now supports multiple capturing points
   const [showSummary, setShowSummary] = useState(false);
+  const [isTransparent, setIsTransparent] = useState(false); 
 
   const activeMeasurement = measurements.find(m => m.id === activeId);
   const allCompleted = measurements.every(m => m.completed);
@@ -64,7 +77,7 @@ function App() {
 
   const handleSelectTask = (id) => {
     setActiveId(prevId => (prevId === id ? null : id));
-    setTempPoint(null);
+    setTempPoints([]); // Reset capture progress
     setActiveEditId(null);
   };
 
@@ -78,6 +91,8 @@ function App() {
       if (category === 'Torso & Core') setCameraTargetY(0.5);
       if (category === 'Arms') setCameraTargetY(0.5);
       if (category === 'Legs') setCameraTargetY(-1.2);
+      if (category === 'Hands & Feet') setCameraTargetY(-1.6);
+      if (category === 'Head & Face') setCameraTargetY(1.4);
     }
   };
 
@@ -120,44 +135,96 @@ function App() {
     setLockState(prev => ({ ...prev, [axis]: !prev[axis] }));
   };
 
+  const calculateThreePointCircle = (pts) => {
+    const [A, B, C] = pts.map(p => new THREE.Vector3(...p));
+    const a = B.clone().sub(A);
+    const b = C.clone().sub(A);
+    const cross = a.clone().cross(b);
+    if (cross.lengthSq() < 1e-6) return null; 
+    
+    const midAB = A.clone().add(B).multiplyScalar(0.5);
+    const midAC = A.clone().add(C).multiplyScalar(0.5);
+    const n = cross.normalize();
+    const pA = n.clone().cross(a).normalize();
+    const pB = n.clone().cross(b).normalize();
+    const pAxpB = pA.clone().cross(pB);
+    if (pAxpB.lengthSq() < 1e-6) return null;
+    
+    const diff = midAC.clone().sub(midAB);
+    const diffxpB = diff.clone().cross(pB);
+    const t1 = diffxpB.dot(pAxpB) / pAxpB.lengthSq();
+    const center = midAB.clone().add(pA.multiplyScalar(t1));
+    const radius = center.distanceTo(A);
+    return { center, radius };
+  };
+
   const handlePointClick = (pointArray) => {
-    if (!activeId || activeMeasurement?.type !== 'distance') return;
+    if (!activeId) return;
 
-    if (!tempPoint) {
-      setTempPoint(pointArray);
-    } else {
-      const p1 = new THREE.Vector3(...tempPoint);
-      const p2 = new THREE.Vector3(...pointArray);
+    if (activeMeasurement.type === 'distance') {
+        if (tempPoints.length === 0) {
+            setTempPoints([pointArray]);
+        } else {
+            const p1 = new THREE.Vector3(...tempPoints[0]);
+            const p2 = new THREE.Vector3(...pointArray);
+            const distance = p1.distanceTo(p2);
+            const scaledDistance = (distance * 15).toFixed(1);
 
-      const distance = p1.distanceTo(p2);
-      const scaledDistance = (distance * 15).toFixed(1);
-
-      setMeasurements(prev => prev.map(m => {
-        if (m.id === activeId) {
-          return { ...m, startPoint: tempPoint, endPoint: pointArray, value: scaledDistance, completed: true };
+            setMeasurements(prev => prev.map(m => {
+                if (m.id === activeId) {
+                    return { ...m, startPoint: tempPoints[0], endPoint: pointArray, value: scaledDistance, completed: true };
+                }
+                return m;
+            }));
+            setTempPoints([]);
+            setActiveId(null);
         }
-        return m;
-      }));
-      setTempPoint(null);
-      setActiveId(null);
+    } 
+    else if (activeMeasurement.type === 'circumference') {
+        if (tempPoints.length < 2) {
+            setTempPoints(prev => [...prev, pointArray]);
+        } else {
+            // Three point capture completed
+            const result = calculateThreePointCircle([...tempPoints, pointArray]);
+            if (!result) return;
+
+            const circumference = Math.PI * 2 * result.radius;
+            const scaledCircumference = (circumference * 15).toFixed(1);
+
+            setMeasurements(prev => prev.map(m => {
+                if (m.id === activeId) {
+                    return { ...m, center: result.center, radius: result.radius, value: scaledCircumference, completed: true };
+                }
+                return m;
+            }));
+            setTempPoints([]);
+            setActiveId(null);
+        }
     }
   };
 
   const handleCurveCapture = (center, radius) => {
-    if (!activeId || activeMeasurement?.type !== 'circumference') return;
+    // This is the old hover capture logic, we now prefer 3-point click.
+    // However, I'll keep it as a fallback or hide it for premium feel.
+  };
 
-    const realCenter = center instanceof THREE.Vector3 ? center : new THREE.Vector3(center.x, center.y, center.z);
-
-    const circumference = Math.PI * 2 * radius;
-    const scaledCircumference = (circumference * 15).toFixed(1);
-
-    setMeasurements(prev => prev.map(m => {
-      if (m.id === activeId) {
-        return { ...m, center: realCenter, radius: radius, value: scaledCircumference, completed: true };
-      }
-      return m;
-    }));
-    setActiveId(null);
+  const handleResetMeasurement = (id) => {
+      setMeasurements(prev => prev.map(m => {
+          if (m.id === id) {
+              return { 
+                  ...m, 
+                  value: null, 
+                  startPoint: null, 
+                  endPoint: null, 
+                  center: null, 
+                  radius: null, 
+                  completed: false 
+              };
+          }
+          return m;
+      }));
+      // Also close editor if open
+      if (activeEditId === id) setActiveEditId(null);
   };
 
   const handleSizeTune = (id, deltaMultiplier, type) => {
@@ -217,7 +284,7 @@ function App() {
     setMeasurements(initialMeasurements);
     setActiveId(null);
     setActiveEditId(null);
-    setTempPoint(null);
+    setTempPoints([]);
     setShowSummary(false);
   };
 
@@ -279,8 +346,8 @@ function App() {
         <div className={`status-indicator ${activeId ? 'measuring' : ''}`}>
           {activeId ? (
             activeMeasurement.type === 'circumference'
-              ? <span><strong>HOVER</strong> intersecting {activeMeasurement.name} and single-click to lock computed Circumference radius.</span>
-              : tempPoint
+              ? <span><strong>Select 3 Points</strong> around the {activeMeasurement.name} ({tempPoints.length}/3)</span>
+              : tempPoints.length > 0
                 ? <span>Click your <strong>END</strong> coordinate directly on custom model</span>
                 : <span>Click your <strong>START</strong> coordinate directly on custom model</span>
           ) : (
@@ -310,36 +377,55 @@ function App() {
                 >
                   <div style={{ display: 'flex', flexDirection: 'column', width: '100%' }}>
 
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }} onClick={() => handleSelectTask(item.id)}>
-                      <div className="measurement-info">
-                        <span className="measurement-name" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                          {item.type === 'circumference' ? <CircleDashed size={14} color="gray" /> : <Ruler size={14} color="gray" />}
-                          {item.name}
-                        </span>
-                        <span className="measurement-status">
-                          {item.completed ? 'Completed' : (activeId === item.id ? 'Measuring...' : 'Pending')}
-                        </span>
-                      </div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-                        <div className="measurement-value">
-                          {formatValue(item.value)} <span style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>{unit}</span>
-                        </div>
-
-                        {item.completed ? (
-                          <button
-                            className={`edit-toggle-btn ${activeEditId === item.id ? 'active' : ''}`}
-                            onClick={(e) => toggleEditor(e, item.id)}
-                            title="Fine-Tune Spatial & Sizing Calibration"
-                          >
-                            <Settings2 size={18} />
-                          </button>
-                        ) : (
-                          <div style={{ width: 25, display: 'flex', justifyContent: 'center', color: 'var(--border-medium)' }}>
-                            <Ruler size={16} />
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
+                          <div className="measurement-info" onClick={() => handleSelectTask(item.id)}>
+                            <span className="measurement-name" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                              {item.type === 'circumference' ? <CircleDashed size={14} color="gray" /> : <Ruler size={14} color="gray" />}
+                              {item.name}
+                            </span>
+                            <span className="measurement-status">
+                              {item.completed ? 'Completed' : (activeId === item.id ? `Measuring... (${tempPoints.length}/${item.type === 'circumference' ? 3 : 2})` : 'Pending')}
+                            </span>
                           </div>
-                        )}
-                      </div>
-                    </div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                            <div className="measurement-value">
+                              {formatValue(item.value)} <span style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>{unit}</span>
+                            </div>
+
+                            {activeId === item.id ? (
+                               <button 
+                                 className="btn-icon cancel"
+                                 onClick={() => handleSelectTask(item.id)}
+                                 title="Cancel Capture"
+                                 style={{color: '#ef4444', background: 'transparent', border: 'none', cursor: 'pointer', padding: '4px'}}
+                               >
+                                 <X size={18} />
+                               </button>
+                            ) : item.completed ? (
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                <button
+                                  className={`edit-toggle-btn ${activeEditId === item.id ? 'active' : ''}`}
+                                  onClick={(e) => toggleEditor(e, item.id)}
+                                  title="Fine-Tune Spatial & Sizing Calibration"
+                                >
+                                  <Settings2 size={18} />
+                                </button>
+                                <button
+                                  className="btn-icon reset"
+                                  onClick={() => handleResetMeasurement(item.id)}
+                                  title="Clear & Redo Measurement"
+                                  style={{color: 'var(--text-secondary)', background: 'transparent', border: 'none', cursor: 'pointer', padding: '4px'}}
+                                >
+                                  <RotateCcw size={16} />
+                                </button>
+                              </div>
+                            ) : (
+                              <div style={{ width: 25, display: 'flex', justifyContent: 'center', color: 'var(--border-medium)', cursor: 'pointer' }} onClick={() => handleSelectTask(item.id)}>
+                                <Ruler size={16} />
+                              </div>
+                            )}
+                          </div>
+                        </div>
 
                     {activeEditId === item.id && (
                       <div className="fine-tune-panel">
@@ -371,7 +457,7 @@ function App() {
         <CanvasContainer
           measurements={measurements}
           activeMeasurement={activeMeasurement}
-          tempPoint={tempPoint}
+          tempPoints={tempPoints}
           onPointClick={handlePointClick}
           onCurveCapture={handleCurveCapture}
           horizRotation={horizRotation}
@@ -384,18 +470,17 @@ function App() {
           unit={unit}
           cameraTargetY={cameraTargetY}
           onSelectMeasurement={handleSelectMeasurement}
+          isTransparent={isTransparent}
         />
       </div>
 
       <div className="right-sidebar fade-in">
-        <div className="view-config glass-panel" style={{ margin: 0, border: 'none', background: 'transparent' }}>
-          <div className="view-config-header" style={{ background: 'transparent', border: 'none', paddingLeft: 0 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <Maximize size={14} /> View Configuration
-            </div>
+        <div className="view-config glass-panel">
+          <div className="view-config-header">
+            <Maximize size={14} /> View Configuration
           </div>
 
-          <div className="view-config-body" style={{ paddingLeft: 0, paddingRight: 0 }}>
+          <div className="view-config-body">
             <div className="config-row">
               <span className="config-label">Model Height</span>
               <input
@@ -447,7 +532,18 @@ function App() {
               </button>
             </div>
 
-            <div className="config-row" style={{ marginTop: '4px' }}>
+              <div className="config-row" style={{ marginTop: '4px' }}>
+                <span className="config-label">X-Ray Mode</span>
+                <button 
+                  className={`lock-axis-btn ${isTransparent ? 'locked' : ''}`}
+                  onClick={() => setIsTransparent(!isTransparent)}
+                  title="Toggle Model Transparency"
+                >
+                  <Ghost size={14} />
+                </button>
+              </div>
+
+              <div className="config-row" style={{ marginTop: '4px' }}>
               <span className="config-label">Measuring Unit</span>
               <div className="unit-toggle">
                 <button

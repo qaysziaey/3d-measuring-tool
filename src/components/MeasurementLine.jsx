@@ -29,34 +29,34 @@ export function MeasurementLine({ start, end, label, color = '#3b82f6', active =
       }}
     >
       <mesh position={start}>
-        <sphereGeometry args={[0.08, 16, 16]} />
-        <meshBasicMaterial color={active ? '#ef4444' : color} depthTest={false} transparent opacity={0.8} />
+        <sphereGeometry args={[0.04, 16, 16]} />
+        <meshBasicMaterial color="#ef4444" depthTest={false} transparent opacity={0.9} />
       </mesh>
       {end && (
         <>
           <mesh position={end}>
-            <sphereGeometry args={[0.08, 16, 16]} />
-            <meshBasicMaterial color={active ? '#ef4444' : color} depthTest={false} transparent opacity={0.8} />
+            <sphereGeometry args={[0.04, 16, 16]} />
+            <meshBasicMaterial color="#ef4444" depthTest={false} transparent opacity={0.9} />
           </mesh>
           <Line
             points={[start, end]}
             color={active ? '#ef4444' : color}
-            lineWidth={6}
+            lineWidth={2.5}
             dashed={false}
           />
           {showLabel && (
-              <Html position={midPoint} center distanceFactor={4} zIndexRange={[100, 0]}>
+              <Html position={midPoint} center distanceFactor={8} zIndexRange={[100, 0]}>
                 <div style={{
                   background: '#ffffff',
-                  padding: '2px 4px',
-                  borderRadius: '4px',
+                  padding: '1px 2px',
+                  borderRadius: '2px',
                   border: '1px solid #e5e7eb',
-                  boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+                  boxShadow: '0 1px 2px rgba(0,0,0,0.1)',
                   color: '#000000',
-                  fontSize: '9px',
+                  fontSize: '7px',
                   fontWeight: '600',
                   pointerEvents: 'none',
-                  transform: 'translate3d(0, -10px, 0)'
+                  whiteSpace: 'nowrap'
                 }}>
                   {label ? label : `${(distance * 10).toFixed(1)} cm`}
                 </div>
