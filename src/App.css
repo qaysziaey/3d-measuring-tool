@@ -1,41 +1,49 @@
 :root {
-  --text-primary: #111827;
-  --text-secondary: #6b7280;
-  --accent-primary: #14b8a6;
-  --accent-hover: #0d9488;
-  --border-light: #f3f4f6;
-  --border-medium: #e5e7eb;
-  --glass-bg: rgba(255, 255, 255, 0.8);
-  --glass-blur: blur(8px);
-  --glass-border: 1px solid rgba(255, 255, 255, 0.3);
+  --text-primary: #1d1d1f;
+  --text-secondary: #86868b;
+  --accent-primary: #56a432;
+  --accent-hover: #4a8d2b;
+  --border-light: #f5f5f7;
+  --border-medium: #d2d2d7;
+  --glass-bg: rgba(255, 255, 255, 0.7);
+  --glass-blur: blur(20px);
+  --glass-border: 1px solid rgba(0, 0, 0, 0.1);
 }
 
 .app-container {
   width: 100vw;
   height: 100vh;
-  position: relative;
+  background: #fbfbfd;
   display: flex;
+  padding: 24px;
+  gap: 24px;
 }
 
 .canvas-wrapper {
   flex: 1;
   height: 100%;
   position: relative;
+  background: white;
+  border-radius: 24px;
+  border: 1px solid var(--border-medium);
+  box-shadow: 0 4px 24px rgba(0,0,0,0.04);
+  overflow: hidden;
   z-index: 1;
 }
 
 .sidebar {
-  position: absolute;
-  top: 24px;
-  left: 24px;
-  width: 320px;
-  max-height: calc(100vh - 48px);
-  z-index: 10;
-  padding: 24px;
+  width: 340px;
+  height: 100%;
   display: flex;
   flex-direction: column;
   gap: 20px;
+  padding: 24px;
+  border-radius: 20px;
+  background: white;
+  border: 1px solid var(--border-medium);
   overflow-y: auto;
+  scroll-behavior: smooth;
+  flex-shrink: 0;
 }
 
 .sidebar-header h1 {
@@ -298,14 +306,16 @@
 }
 
 .right-sidebar {
-  position: absolute;
-  top: 24px;
-  right: 24px;
-  width: 300px;
-  z-index: 20;
+  width: 280px;
+  height: 100%;
+  padding: 24px;
   display: flex;
   flex-direction: column;
   gap: 16px;
+  border-radius: 20px;
+  background: white;
+  border: 1px solid var(--border-medium);
+  flex-shrink: 0;
 }
 
 .floating-controls-inner {

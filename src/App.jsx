@@ -46,8 +46,8 @@ function App() {
   const [activeEditId, setActiveEditId] = useState(null); 
   const [collapsedCategories, setCollapsedCategories] = useState({});
   const [showLabels, setShowLabels] = useState(true);
-  const [modelScale, setModelScale] = useState(2.2);
-  const [zoom, setZoom] = useState(8);
+  const [modelScale, setModelScale] = useState(1.6);
+  const [zoom, setZoom] = useState(12);
   const [unit, setUnit] = useState('cm'); // 'cm' or 'mm'
   const [cameraTargetY, setCameraTargetY] = useState(0); 
   
@@ -85,9 +85,27 @@ function App() {
   };
 
   const toggleEditor = (e, id) => {
-    e.stopPropagation();
+    if (e) e.stopPropagation();
     setActiveEditId(prev => (prev === id ? null : id));
     setActiveId(null); 
+  };
+
+  const handleSelectMeasurement = (id) => {
+    const item = measurements.find(m => m.id === id);
+    if (!item) return;
+
+    // 1. Ensure category is expanded
+    setCollapsedCategories(prev => ({ ...prev, [item.category]: false }));
+
+    // 2. Open the fine-tune editor
+    setActiveEditId(id);
+    setActiveId(null);
+
+    // 3. Scroll into view
+    setTimeout(() => {
+      const el = document.getElementById(`item-${id}`);
+      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 100);
   };
 
   const handlePointClick = (pointArray) => {
@@ -211,88 +229,6 @@ function App() {
 
   return (
     <div className="app-container">
-      <div className="canvas-wrapper">
-        <CanvasContainer 
-          measurements={measurements}
-          activeMeasurement={activeMeasurement}
-          tempPoint={tempPoint}
-          onPointClick={handlePointClick}
-          onCurveCapture={handleCurveCapture}
-          isCameraLocked={isCameraLocked}
-          showLabels={showLabels}
-          modelScale={modelScale}
-          zoom={zoom}
-          unit={unit}
-          cameraTargetY={cameraTargetY}
-        />
-
-        <div className="right-sidebar fade-in">
-          <div className="view-config glass-panel" style={{margin: 0}}>
-            <div className="view-config-header" onClick={() => toggleCategory('view_config')}>
-               <div style={{display: 'flex', alignItems: 'center', gap: '8px'}}>
-                  <Maximize size={14} /> View Configuration
-               </div>
-               {collapsedCategories['view_config'] ? <ChevronDown size={14} /> : <ChevronUp size={14} />}
-            </div>
-            
-            {!collapsedCategories['view_config'] && (
-              <div className="view-config-body">
-                <div className="config-row">
-                  <span className="config-label">Model Height</span>
-                  <input 
-                    type="range" min="1" max="4" step="0.1" 
-                    value={modelScale} 
-                    onChange={(e) => setModelScale(parseFloat(e.target.value))} 
-                  />
-                  <span className="config-value">{modelScale.toFixed(1)}x</span>
-                </div>
-                <div className="config-row">
-                  <span className="config-label">Camera Zoom</span>
-                  <input 
-                    type="range" min="3" max="15" step="0.1" 
-                    value={zoom} 
-                    onChange={(e) => setZoom(parseFloat(e.target.value))} 
-                  />
-                  <span className="config-value">{zoom.toFixed(1)}m</span>
-                </div>
-
-                <div className="config-row" style={{marginTop: '4px'}}>
-                  <span className="config-label">Measuring Unit</span>
-                  <div className="unit-toggle">
-                      <button 
-                        className={`unit-btn ${unit === 'cm' ? 'active' : ''}`} 
-                        onClick={() => setUnit('cm')}
-                      >cm</button>
-                      <button 
-                        className={`unit-btn ${unit === 'mm' ? 'active' : ''}`} 
-                        onClick={() => setUnit('mm')}
-                      >mm</button>
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-
-          <div className="floating-controls-inner">
-              <button 
-                 className={`floating-btn ${showLabels ? 'unlocked' : 'locked'}`}
-                 onClick={() => setShowLabels(!showLabels)}
-              >
-                {showLabels ? <Eye size={16} /> : <EyeOff size={16} />}
-                {showLabels ? "Hide Labels" : "Show Labels"}
-              </button>
-
-              <button 
-                 className={`floating-btn ${isCameraLocked ? 'locked' : 'unlocked'}`}
-                 onClick={() => setIsCameraLocked(!isCameraLocked)}
-              >
-                {isCameraLocked ? <Lock size={16} /> : <Unlock size={16} />}
-                {isCameraLocked ? "3D Rotation Locked" : "3D Navigation Active"}
-              </button>
-          </div>
-        </div>
-      </div>
-
       <div className="sidebar glass-panel fade-in">
         <div className="sidebar-header">
           <h1>Anatomy Metrics</h1>
@@ -328,7 +264,8 @@ function App() {
                 {!collapsedCategories[category] && measurements.filter(m => m.category === category).map(item => (
                   <div 
                     key={item.id}
-                    className={`measurement-item ${activeId === item.id ? 'active' : ''} ${item.completed ? 'completed' : ''}`}
+                    id={`item-${item.id}`}
+                    className={`measurement-item ${activeId === item.id ? 'active' : ''} ${item.completed ? 'completed' : ''} ${activeEditId === item.id ? 'editing' : ''}`}
                   >
                     <div style={{display: 'flex', flexDirection: 'column', width: '100%'}}>
                         
@@ -387,6 +324,86 @@ function App() {
         >
           View Final Report
         </button>
+      </div>
+
+      <div className="canvas-wrapper">
+        <CanvasContainer 
+          measurements={measurements}
+          activeMeasurement={activeMeasurement}
+          tempPoint={tempPoint}
+          onPointClick={handlePointClick}
+          onCurveCapture={handleCurveCapture}
+          isCameraLocked={isCameraLocked}
+          showLabels={showLabels}
+          modelScale={modelScale}
+          zoom={zoom}
+          unit={unit}
+          cameraTargetY={cameraTargetY}
+          onSelectMeasurement={handleSelectMeasurement}
+        />
+      </div>
+
+      <div className="right-sidebar fade-in">
+          <div className="view-config glass-panel" style={{margin: 0, border: 'none', background: 'transparent'}}>
+            <div className="view-config-header" style={{background: 'transparent', border: 'none', paddingLeft: 0}}>
+               <div style={{display: 'flex', alignItems: 'center', gap: '8px'}}>
+                  <Maximize size={14} /> View Configuration
+               </div>
+            </div>
+            
+            <div className="view-config-body" style={{paddingLeft: 0, paddingRight: 0}}>
+              <div className="config-row">
+                <span className="config-label">Model Height</span>
+                <input 
+                  type="range" min="1" max="4" step="0.1" 
+                  value={modelScale} 
+                  onChange={(e) => setModelScale(parseFloat(e.target.value))} 
+                />
+                <span className="config-value">{modelScale.toFixed(1)}x</span>
+              </div>
+              <div className="config-row">
+                <span className="config-label">Camera Zoom</span>
+                <input 
+                  type="range" min="3" max="25" step="0.1" 
+                  value={zoom} 
+                  onChange={(e) => setZoom(parseFloat(e.target.value))} 
+                />
+                <span className="config-value">{zoom.toFixed(1)}m</span>
+              </div>
+
+              <div className="config-row" style={{marginTop: '4px'}}>
+                <span className="config-label">Measuring Unit</span>
+                <div className="unit-toggle">
+                    <button 
+                      className={`unit-btn ${unit === 'cm' ? 'active' : ''}`} 
+                      onClick={() => setUnit('cm')}
+                    >cm</button>
+                    <button 
+                      className={`unit-btn ${unit === 'mm' ? 'active' : ''}`} 
+                      onClick={() => setUnit('mm')}
+                    >mm</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div style={{marginTop: 'auto'}} className="floating-controls-inner">
+              <button 
+                 className={`floating-btn ${showLabels ? 'unlocked' : 'locked'}`}
+                 onClick={() => setShowLabels(!showLabels)}
+              >
+                {showLabels ? <Eye size={16} /> : <EyeOff size={16} />}
+                {showLabels ? "Hide Labels" : "Show Labels"}
+              </button>
+
+              <button 
+                 className={`floating-btn ${isCameraLocked ? 'locked' : 'unlocked'}`}
+                 onClick={() => setIsCameraLocked(!isCameraLocked)}
+              >
+                {isCameraLocked ? <Lock size={16} /> : <Unlock size={16} />}
+                {isCameraLocked ? "3D Rotation Locked" : "3D Navigation Active"}
+              </button>
+          </div>
       </div>
 
       {showSummary && (

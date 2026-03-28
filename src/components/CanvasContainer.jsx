@@ -6,7 +6,7 @@ import React, { Suspense, useState, useMemo, useEffect } from 'react';
 import * as THREE from 'three';
 
 // Generates a responsive bounding Ring perfectly sized over hovering slices
-function ContourRing({ center, radius, label, color = "#14b8a6", showLabel = true, unit = 'cm' }) {
+function ContourRing({ id, center, radius, label, color = "#14b8a6", showLabel = true, unit = 'cm', onSelect }) {
   if (!center) return null;
 
   const formatLabel = (val) => {
@@ -30,11 +30,17 @@ function ContourRing({ center, radius, label, color = "#14b8a6", showLabel = tru
   const exactCircumference = Math.PI * 2 * radius;
 
   return (
-    <group>
+    <group 
+      onPointerDown={(e) => {
+        e.stopPropagation();
+        if (onSelect) onSelect(id);
+      }}
+      cursor="pointer"
+    >
       <Line
         points={points}
         color={color}
-        lineWidth={3}
+        lineWidth={6} // Thicker for easier clicking
         dashed={false}
         transparent
         opacity={0.8}
@@ -93,7 +99,8 @@ export function CanvasContainer({
   modelScale,
   zoom,
   unit = 'cm',
-  cameraTargetY = 0
+  cameraTargetY = 0,
+  onSelectMeasurement
 }) {
   const [hoverData, setHoverData] = useState(null);
 
@@ -212,6 +219,7 @@ export function CanvasContainer({
             label={`${m.name}: ${format3DLabel(m.value)}`} 
             color="#3b82f6" 
             showLabel={showLabels}
+            onClick={() => onSelectMeasurement(m.id)}
           />
         );
       })}
@@ -222,12 +230,14 @@ export function CanvasContainer({
         return (
           <ContourRing 
              key={m.id} 
+             id={m.id}
              center={m.center} 
              radius={m.radius}
              label={`${m.name}: ${format3DLabel(m.value)}`} 
              color="#14b8a6"
              showLabel={showLabels}
              unit={unit}
+             onSelect={onSelectMeasurement}
           />
         );
       })}

@@ -2,7 +2,7 @@ import React, { useMemo } from 'react';
 import { Line, Html } from '@react-three/drei';
 import * as THREE from 'three';
 
-export function MeasurementLine({ start, end, label, color = '#3b82f6', active = false, showLabel = true }) {
+export function MeasurementLine({ start, end, label, color = '#3b82f6', active = false, showLabel = true, onClick }) {
   const distance = useMemo(() => {
     if (!start || !end) return 0;
     const p1 = new THREE.Vector3(...start);
@@ -22,7 +22,12 @@ export function MeasurementLine({ start, end, label, color = '#3b82f6', active =
   if (!start) return null;
 
   return (
-    <group>
+    <group 
+      onPointerDown={(e) => {
+        e.stopPropagation();
+        if (onClick) onClick();
+      }}
+    >
       <mesh position={start}>
         <sphereGeometry args={[0.08, 16, 16]} />
         <meshBasicMaterial color={active ? '#ef4444' : color} depthTest={false} transparent opacity={0.8} />
@@ -36,7 +41,7 @@ export function MeasurementLine({ start, end, label, color = '#3b82f6', active =
           <Line
             points={[start, end]}
             color={active ? '#ef4444' : color}
-            lineWidth={3}
+            lineWidth={6}
             dashed={false}
           />
           {showLabel && (
