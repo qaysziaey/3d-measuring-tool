@@ -555,7 +555,7 @@ function App() {
         />
       </div>
 
-      <div className="view-config glass-panel fade-in" style={{ width: '260px', flexShrink: 0 }}>
+      <div className="view-config glass-panel fade-in" style={{ width: '300px', flexShrink: 0 }}>
         <div className="view-config-header">
           <Maximize size={14} /> View Configuration
         </div>

@@ -142,6 +142,7 @@
   overflow: hidden;
   box-shadow: var(--shadow-md);
   border: none;
+  width: 300px;
   height: 100%;
   display: flex;
   flex-direction: column;
@@ -225,10 +226,10 @@ input[type="range"] {
 }
 
 .config-value {
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 600;
-  color: var(--text-primary);
-  min-width: 30px;
+  color: var(--text-main);
+  min-width: 45px;
   text-align: right;
 }
 
@@ -497,8 +498,8 @@ input[type="range"] {
     width: 280px;
   }
 
-  .right-sidebar {
-    width: 220px;
+  .view-config {
+    width: 260px;
   }
 }
 
@@ -512,12 +513,13 @@ input[type="range"] {
   }
 
   .sidebar,
-  .right-sidebar {
+  .view-config {
     width: 100%;
     max-width: 100%;
     height: auto;
-    max-height: 400px;
+    max-height: 480px;
     flex: 1 1 100%;
+    min-height: 300px;
   }
 
   .canvas-wrapper {

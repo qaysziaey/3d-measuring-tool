@@ -226,15 +226,28 @@ export function CanvasContainer({
       shadows={{ type: THREE.PCFShadowMap }}
       clock={new THREE.Timer()}
       camera={{ position: [0, 2, 8], fov: 45 }}
-      style={{ background: theme === 'dark' ? '#0a0a0a' : '#f3f4f6' }}
+      style={{ 
+        background: theme === 'dark' 
+          ? 'radial-gradient(circle at center, #222222 0%, #111111 100%)' 
+          : 'radial-gradient(circle at center, #ffffff 0%, #dfe4ea 100%)' 
+      }}
     >
       <ambientLight intensity={0.8} />
       <directionalLight position={[5, 10, 5]} intensity={1.5} castShadow shadow-mapSize-width={1024} shadow-mapSize-height={1024} />
       <Environment preset="city" />
+      
+      <ContactShadows 
+        position={[0, -4.2, 0]}
+        opacity={0.35} 
+        blur={2} 
+        far={10} 
+        resolution={1024} 
+        color={theme === 'dark' ? '#000000' : '#444444'} 
+      />
 
       <Suspense fallback={null}>
         <group position={[modelPos.x, modelPos.y, modelPos.z]}>
-          <Center top>
+          <Center>
             <CustomModel 
               onPointerDown={handlePointerDown} 
               onPointerMove={handlePointerMove}
