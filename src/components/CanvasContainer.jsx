@@ -1,12 +1,13 @@
 import { useThree, Canvas } from '@react-three/fiber';
-import { OrbitControls, Environment, ContactShadows, Line, Html, useGLTF } from '@react-three/drei';
+import { OrbitControls, Environment, ContactShadows, Line, Html, useGLTF, Center } from '@react-three/drei';
 import { CustomModel } from './CustomModel';
 import { MeasurementLine } from './MeasurementLine';
 import React, { Suspense, useState, useMemo, useEffect, useRef } from 'react';
 import * as THREE from 'three';
+import { CircleDashed } from 'lucide-react';
 
 // Generates a responsive bounding Ring perfectly sized over hovering slices
-function ContourRing({ id, center, radius, label, color = "#14b8a6", showLabel = true, unit = 'cm', onSelect }) {
+function ContourRing({ id, center, radius, label, color = "#14b8a6", showLabel = true, unit = 'cm', onSelect, normal = [0, 1, 0] }) {
   if (!center) return null;
 
   const formatLabel = (val) => {
@@ -14,53 +15,64 @@ function ContourRing({ id, center, radius, label, color = "#14b8a6", showLabel =
     return unit === 'mm' ? (v * 10).toFixed(0) : v.toFixed(1);
   };
 
-  const segments = 64;
-  const points = [];
-  const r = radius + 0.05; 
-  
-  for (let i = 0; i <= segments; i++) {
-    const theta = (i / segments) * Math.PI * 2;
-    points.push([
-      center.x + r * Math.cos(theta),
-      center.y,
-      center.z + r * Math.sin(theta)
-    ]);
-  }
-
   const exactCircumference = Math.PI * 2 * radius;
+  
+  // High-precision orientation matrix: 
+  // Aligns the Torus local Z-axis (normal) to the calculated 3D plane
+  const orientationRef = useRef();
+  useEffect(() => {
+    if (orientationRef.current) {
+        if (normal) {
+            const n = new THREE.Vector3(...(Array.isArray(normal) ? normal : [normal.x, normal.y, normal.z])).normalize();
+            orientationRef.current.lookAt(new THREE.Vector3().addVectors(orientationRef.current.position, n));
+        } else {
+            // Default horizontal slice for hover
+            orientationRef.current.rotation.set(Math.PI / 2, 0, 0);
+        }
+    }
+  }, [normal, center]);
 
   return (
     <group 
+      ref={orientationRef}
       onPointerDown={(e) => {
         e.stopPropagation();
         if (onSelect) onSelect(id);
       }}
       cursor="pointer"
+      position={[center.x, center.y, center.z]}
     >
-      <Line
-        points={points}
-        color={color}
-        lineWidth={6} // Thicker for easier clicking
-        dashed={false}
-        transparent
-        opacity={0.8}
-      />
+      <mesh>
+        <torusGeometry args={[radius, 0.008, 12, 128]} />
+        <meshStandardMaterial 
+          color="#56a432" 
+          emissive="#56a432"
+          emissiveIntensity={0.5}
+          transparent 
+          opacity={0.9} 
+        />
+      </mesh>
       
         {showLabel && (
-          <Html position={[center.x + r, center.y, center.z]} center distanceFactor={8} zIndexRange={[100, 0]}>
-            <div style={{
-              background: '#ffffff',
-              padding: '1px 2px',
-              borderRadius: '2px',
-              border: '1px solid #e5e7eb',
-              boxShadow: '0 1px 2px rgba(0,0,0,0.1)',
-              color: '#000000',
-              fontSize: '7px',
-              fontWeight: '600',
-              pointerEvents: 'none',
-              whiteSpace: 'nowrap'
-            }}>
-              {label ? label : `Curve: ${formatLabel(exactCircumference * 15)} ${unit}`}
+          <Html position={[radius + 0.05, 0, 0]} center distanceFactor={8} zIndexRange={[100, 0]}>
+            <div 
+              className="measurement-tag shadow-glow"
+              style={{
+                color: 'white',
+                background: '#56a432',
+                padding: '3px 8px',
+                borderRadius: '4px',
+                fontSize: '7px',
+                fontWeight: '600',
+                whiteSpace: 'nowrap',
+                pointerEvents: 'none',
+                opacity: 0.9
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                <CircleDashed size={8} />
+                {label ? label : `${formatLabel(exactCircumference * 15)} ${unit}`}
+              </div>
             </div>
           </Html>
         )}
@@ -96,6 +108,7 @@ export function CanvasContainer({
   showLabels,
   modelScale,
   zoom,
+  modelPos,
   unit = 'cm',
   cameraTargetY = 0,
   onSelectMeasurement,
@@ -210,7 +223,8 @@ export function CanvasContainer({
 
   return (
     <Canvas
-      shadows
+      shadows={{ type: THREE.PCFShadowMap }}
+      clock={new THREE.Timer()}
       camera={{ position: [0, 2, 8], fov: 45 }}
       style={{ background: theme === 'dark' ? '#0a0a0a' : '#f3f4f6' }}
     >
@@ -219,13 +233,18 @@ export function CanvasContainer({
       <Environment preset="city" />
 
       <Suspense fallback={null}>
-        <CustomModel 
-          onPointerDown={handlePointerDown} 
-          onPointerMove={handlePointerMove}
-          onPointerOut={handlePointerOut}
-          scale={modelScale}
-          isTransparent={isTransparent}
-        />
+        <group position={[modelPos.x, modelPos.y, modelPos.z]}>
+          <Center top>
+            <CustomModel 
+              onPointerDown={handlePointerDown} 
+              onPointerMove={handlePointerMove}
+              onPointerOut={handlePointerOut}
+              modelPath="/new-rigg.glb" 
+              scale={modelScale} 
+              isTransparent={isTransparent}
+            />
+          </Center>
+        </group>
       </Suspense>
 
       {/* Standard Point-to-Point Distances */}
@@ -253,6 +272,7 @@ export function CanvasContainer({
              id={m.id}
              center={m.center} 
              radius={m.radius}
+             normal={m.normal}
              label={`${m.name}: ${format3DLabel(m.value)}`} 
              color="#14b8a6"
              showLabel={showLabels}
@@ -271,8 +291,8 @@ export function CanvasContainer({
 
       <OrbitControls 
         ref={orbitRef}
-        enableRotate={true}
-        enablePan={true}
+        enableRotate={false}
+        enablePan={false}
         enableZoom={true} 
         minPolarAngle={lockState.vert ? vertRotation : 0} 
         maxPolarAngle={lockState.vert ? vertRotation : Math.PI} 

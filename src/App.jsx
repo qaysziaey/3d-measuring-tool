@@ -64,8 +64,9 @@ function App() {
   });
 
   const [showLabels, setShowLabels] = useState(true);
-  const [modelScale, setModelScale] = useState(1.6);
-  const [zoom, setZoom] = useState(12);
+  const [modelScale, setModelScale] = useState(2.2);
+  const [zoom, setZoom] = useState(8);
+  const [modelPos, setModelPos] = useState({ x: 0, y: 0, z: 0 }); // Let <Center> handle the verticality
   const [unit, setUnit] = useState('cm'); // 'cm' or 'mm'
   const [cameraTargetY, setCameraTargetY] = useState(0); 
   
@@ -148,6 +149,11 @@ function App() {
     setLockState(prev => ({ ...prev, [axis]: !prev[axis] }));
   };
 
+  const setViewpoint = (horiz, vert) => {
+    if (!lockState.horiz) setHorizRotation(horiz);
+    if (!lockState.vert) setVertRotation(vert);
+  };
+
   const calculateThreePointCircle = (pts) => {
     const [A, B, C] = pts.map(p => new THREE.Vector3(...p));
     const a = B.clone().sub(A);
@@ -168,7 +174,7 @@ function App() {
     const t1 = diffxpB.dot(pAxpB) / pAxpB.lengthSq();
     const center = midAB.clone().add(pA.multiplyScalar(t1));
     const radius = center.distanceTo(A);
-    return { center, radius };
+    return { center, radius, normal: n }; // Return the 3D orientation normal
   };
 
   const handlePointClick = (pointArray) => {
@@ -231,6 +237,7 @@ function App() {
                   endPoint: null, 
                   center: null, 
                   radius: null, 
+                  normal: null,
                   completed: false 
               };
           }
@@ -238,6 +245,15 @@ function App() {
       }));
       // Also close editor if open
       if (activeEditId === id) setActiveEditId(null);
+  };
+
+  const handleManualValueChange = (id, newValue) => {
+    setMeasurements(prev => prev.map(m => {
+      if (m.id === id) {
+        return { ...m, value: newValue, completed: true };
+      }
+      return m;
+    }));
   };
 
   const handleSizeTune = (id, deltaMultiplier, type) => {
@@ -461,6 +477,26 @@ function App() {
 
                     {activeEditId === item.id && (
                       <div className="fine-tune-panel">
+                        <div className="tune-row" style={{ marginBottom: '8px', borderBottom: '1px solid var(--border-light)', paddingBottom: '8px' }}>
+                          <span className="tune-label" style={{ flex: 1 }}>Edit Value ({unit})</span>
+                          <input 
+                            type="text"
+                            value={item.value || ''}
+                            onChange={(e) => handleManualValueChange(item.id, e.target.value)}
+                            style={{
+                              width: '80px',
+                              background: 'var(--bg-app)',
+                              border: '1px solid var(--border-light)',
+                              color: 'var(--text-main)',
+                              borderRadius: '4px',
+                              padding: '2px 6px',
+                              fontSize: '12px',
+                              textAlign: 'right',
+                              outline: 'none',
+                              fontWeight: '600'
+                            }}
+                          />
+                        </div>
                         {renderTuneRow('Magnitude', 'size', item.id, (id, _, dir) => handleSizeTune(id, dir, item.type))}
                         {renderTuneRow('Translate X', 'x', item.id, handleMoveTune)}
                         {renderTuneRow('Translate Y', 'y', item.id, handleMoveTune)}
@@ -510,6 +546,7 @@ function App() {
           showLabels={showLabels}
           modelScale={modelScale}
           zoom={zoom}
+          modelPos={modelPos}
           unit={unit}
           cameraTargetY={cameraTargetY}
           onSelectMeasurement={handleSelectMeasurement}
@@ -543,8 +580,36 @@ function App() {
               <span className="config-value">{zoom.toFixed(1)}m</span>
             </div>
 
-            <div className="config-row">
-              <span className="config-label">Horizontal Rot.</span>
+              <div className="config-row">
+                <span className="config-label">Translate X</span>
+                <input 
+                  type="range" min="-5" max="5" step="0.1" 
+                  value={modelPos.x} 
+                  onChange={(e) => setModelPos(prev => ({ ...prev, x: parseFloat(e.target.value) }))} 
+                />
+                <span className="config-value">{modelPos.x.toFixed(1)}</span>
+              </div>
+              <div className="config-row">
+                <span className="config-label">Translate Y</span>
+                <input 
+                  type="range" min="-10" max="10" step="0.1" 
+                  value={modelPos.y} 
+                  onChange={(e) => setModelPos(prev => ({ ...prev, y: parseFloat(e.target.value) }))} 
+                />
+                <span className="config-value">{modelPos.y.toFixed(1)}</span>
+              </div>
+              <div className="config-row">
+                <span className="config-label">Translate Z</span>
+                <input 
+                  type="range" min="-5" max="5" step="0.1" 
+                  value={modelPos.z} 
+                  onChange={(e) => setModelPos(prev => ({ ...prev, z: parseFloat(e.target.value) }))} 
+                />
+                <span className="config-value">{modelPos.z.toFixed(1)}</span>
+              </div>
+
+              <div className="config-row">
+                <span className="config-label">Horizontal Rot.</span>
               <input 
                 type="range" min={-Math.PI} max={Math.PI} step="0.01" 
                 value={horizRotation} 
@@ -575,7 +640,19 @@ function App() {
               </button>
             </div>
 
-              <div className="config-row" style={{ marginTop: '4px' }}>
+              <div className="config-row" style={{ marginTop: '8px', borderTop: '1px solid var(--border-light)', paddingTop: '12px' }}>
+                <span className="config-label">Standard Perspectives</span>
+              </div>
+              <div className="viewpoint-grid">
+                <button className="viewpoint-btn" onClick={() => setViewpoint(0, Math.PI / 2)}>Front</button>
+                <button className="viewpoint-btn" onClick={() => setViewpoint(Math.PI, Math.PI / 2)}>Back</button>
+                <button className="viewpoint-btn" onClick={() => setViewpoint(Math.PI / 2, Math.PI / 2)}>Right</button>
+                <button className="viewpoint-btn" onClick={() => setViewpoint(-Math.PI / 2, Math.PI / 2)}>Left</button>
+                <button className="viewpoint-btn" onClick={() => setViewpoint(0, 0.05)}>Top</button>
+                <button className="viewpoint-btn" onClick={() => setViewpoint(0, Math.PI - 0.05)}>Bottom</button>
+              </div>
+
+              <div className="config-row" style={{ marginTop: '12px' }}>
                 <span className="config-label">Annotation Labels</span>
                 <button 
                   className={`lock-axis-btn ${showLabels ? 'locked' : ''}`}
