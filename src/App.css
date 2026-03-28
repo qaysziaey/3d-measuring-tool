@@ -370,6 +370,31 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 12px;
+}
+
+.lock-axis-btn {
+  background: var(--border-light);
+  border: 1px solid var(--border-medium);
+  border-radius: 4px;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: var(--text-secondary);
+  transition: all 0.2s;
+}
+
+.lock-axis-btn:hover {
+  background: var(--border-medium);
+}
+
+.lock-axis-btn.locked {
+  background: var(--accent-primary);
+  color: white;
+  border-color: var(--accent-primary);
 }
 
 .fine-tune-controls {

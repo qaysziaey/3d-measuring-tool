@@ -47,13 +47,16 @@ function App() {
   const [collapsedCategories, setCollapsedCategories] = useState({});
   const [showLabels, setShowLabels] = useState(true);
   const [modelScale, setModelScale] = useState(1.6);
-  const [zoom, setZoom] = useState(100);
+  const [zoom, setZoom] = useState(12);
   const [unit, setUnit] = useState('cm'); // 'cm' or 'mm'
-  const [cameraTargetY, setCameraTargetY] = useState(0);
-
+  const [cameraTargetY, setCameraTargetY] = useState(0); 
+  
+  const [horizRotation, setHorizRotation] = useState(0);
+  const [vertRotation, setVertRotation] = useState(Math.PI / 2); // 90 degrees (facing center)
+  const [lockState, setLockState] = useState({ horiz: false, vert: false });
+  
   const [tempPoint, setTempPoint] = useState(null);
   const [showSummary, setShowSummary] = useState(false);
-  const [isCameraLocked, setIsCameraLocked] = useState(true);
 
   const activeMeasurement = measurements.find(m => m.id === activeId);
   const allCompleted = measurements.every(m => m.completed);
@@ -106,6 +109,15 @@ function App() {
       const el = document.getElementById(`item-${id}`);
       if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }, 100);
+  };
+
+  const handleCameraChange = (azimuth, polar) => {
+    if (!lockState.horiz) setHorizRotation(azimuth);
+    if (!lockState.vert) setVertRotation(polar);
+  };
+
+  const toggleLock = (axis) => {
+    setLockState(prev => ({ ...prev, [axis]: !prev[axis] }));
   };
 
   const handlePointClick = (pointArray) => {
@@ -207,7 +219,6 @@ function App() {
     setActiveEditId(null);
     setTempPoint(null);
     setShowSummary(false);
-    setIsCameraLocked(true);
   };
 
   const handleExportJSON = () => {
@@ -363,7 +374,10 @@ function App() {
           tempPoint={tempPoint}
           onPointClick={handlePointClick}
           onCurveCapture={handleCurveCapture}
-          isCameraLocked={isCameraLocked}
+          horizRotation={horizRotation}
+          vertRotation={vertRotation}
+          lockState={lockState}
+          onCameraChange={handleCameraChange}
           showLabels={showLabels}
           modelScale={modelScale}
           zoom={zoom}
@@ -401,6 +415,38 @@ function App() {
               <span className="config-value">{zoom.toFixed(1)}m</span>
             </div>
 
+            <div className="config-row">
+              <span className="config-label">Horizontal Rot.</span>
+              <input 
+                type="range" min={-Math.PI} max={Math.PI} step="0.01" 
+                value={horizRotation} 
+                onChange={(e) => setHorizRotation(parseFloat(e.target.value))} 
+              />
+              <button 
+                className={`lock-axis-btn ${lockState.horiz ? 'locked' : ''}`}
+                onClick={() => toggleLock('horiz')}
+                title="Lock Horizontal Orbit"
+              >
+                {lockState.horiz ? <Lock size={12}/> : <Unlock size={12}/>}
+              </button>
+            </div>
+
+            <div className="config-row">
+              <span className="config-label">Vertical Tilt</span>
+              <input 
+                type="range" min="0" max={Math.PI} step="0.01" 
+                value={vertRotation} 
+                onChange={(e) => setVertRotation(parseFloat(e.target.value))} 
+              />
+              <button 
+                className={`lock-axis-btn ${lockState.vert ? 'locked' : ''}`}
+                onClick={() => toggleLock('vert')}
+                title="Lock Vertical Tilt"
+              >
+                {lockState.vert ? <Lock size={12}/> : <Unlock size={12}/>}
+              </button>
+            </div>
+
             <div className="config-row" style={{ marginTop: '4px' }}>
               <span className="config-label">Measuring Unit</span>
               <div className="unit-toggle">
@@ -424,14 +470,6 @@ function App() {
           >
             {showLabels ? <Eye size={16} /> : <EyeOff size={16} />}
             {showLabels ? "Hide Labels" : "Show Labels"}
-          </button>
-
-          <button
-            className={`floating-btn ${isCameraLocked ? 'locked' : 'unlocked'}`}
-            onClick={() => setIsCameraLocked(!isCameraLocked)}
-          >
-            {isCameraLocked ? <Lock size={16} /> : <Unlock size={16} />}
-            {isCameraLocked ? "3D Rotation Locked" : "3D Navigation Active"}
           </button>
         </div>
       </div>

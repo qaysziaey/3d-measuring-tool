@@ -4,7 +4,7 @@ import * as THREE from 'three';
 
 export function CustomModel({ onPointerDown, onPointerMove, onPointerOut, scale = 2.2 }) {
   // Leverages bleeding-edge GLTF mapping pulling internal animations, armatures, and rigged bones efficiently
-  const { scene } = useGLTF('/RiggedBody.glb');
+  const { scene } = useGLTF('/new-rigg.glb');
 
   // Traverse hierarchical internal sub-meshes mapping continuous SaaS Slate style identical to base geometry limits
   useEffect(() => {
@@ -38,4 +38,4 @@ export function CustomModel({ onPointerDown, onPointerMove, onPointerOut, scale 
 }
 
 // Caches skeletal file locally ensuring instant swapping and preventing memory thrashing
-useGLTF.preload('/RiggedBody.glb');
+useGLTF.preload('/new-rigg.glb');

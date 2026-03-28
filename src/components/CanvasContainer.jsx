@@ -2,7 +2,7 @@ import { useThree, Canvas } from '@react-three/fiber';
 import { OrbitControls, Environment, ContactShadows, Line, Html, useGLTF } from '@react-three/drei';
 import { CustomModel } from './CustomModel';
 import { MeasurementLine } from './MeasurementLine';
-import React, { Suspense, useState, useMemo, useEffect } from 'react';
+import React, { Suspense, useState, useMemo, useEffect, useRef } from 'react';
 import * as THREE from 'three';
 
 // Generates a responsive bounding Ring perfectly sized over hovering slices
@@ -79,14 +79,6 @@ function CursorFollower({ tempPoint }) {
   );
 }
 
-function CameraUpdate({ zoom }) {
-  const { camera } = useThree();
-  useEffect(() => {
-    camera.position.set(0, zoom * 0.2, zoom);
-    camera.lookAt(0, 0, 0);
-  }, [zoom, camera]);
-  return null;
-}
 
 export function CanvasContainer({ 
   measurements, 
@@ -94,7 +86,10 @@ export function CanvasContainer({
   tempPoint, 
   onPointClick,
   onCurveCapture,
-  isCameraLocked,
+  horizRotation,
+  vertRotation,
+  lockState,
+  onCameraChange,
   showLabels,
   modelScale,
   zoom,
@@ -103,6 +98,29 @@ export function CanvasContainer({
   onSelectMeasurement
 }) {
   const [hoverData, setHoverData] = useState(null);
+  const orbitRef = useRef();
+  const isInternalUpdate = useRef(false);
+
+  // Synchronize 3D Camera with UI Sliders
+  useEffect(() => {
+    if (!orbitRef.current || isInternalUpdate.current) return;
+    
+    // We update the camera position based on the spherical coordinates from the sliders
+    const controls = orbitRef.current;
+    const distance = controls.object.position.distanceTo(controls.target);
+    
+    // Convert azimuthal/polar to Cartesian relative to target
+    const x = distance * Math.sin(vertRotation) * Math.sin(horizRotation);
+    const y = distance * Math.cos(vertRotation);
+    const z = distance * Math.sin(vertRotation) * Math.cos(horizRotation);
+    
+    controls.object.position.set(
+      controls.target.x + x,
+      controls.target.y + y,
+      controls.target.z + z
+    );
+    controls.update();
+  }, [horizRotation, vertRotation]);
 
   const format3DLabel = (cmVal) => {
     if (!cmVal) return '';
@@ -111,7 +129,7 @@ export function CanvasContainer({
   };
   
   // Robust skeletal extraction traversing the entire GLTF tree for deep rig architectures
-  const { scene, nodes } = useGLTF('/RiggedBody.glb');
+  const { scene, nodes } = useGLTF('/new-rigg.glb');
   const skeletonBones = useMemo(() => {
     const bones = [];
     scene.traverse(node => {
@@ -194,7 +212,6 @@ export function CanvasContainer({
       camera={{ position: [0, 2, 8], fov: 45 }}
       style={{ background: '#f3f4f6' }}
     >
-      <CameraUpdate zoom={zoom} />
       <ambientLight intensity={0.8} />
       <directionalLight position={[5, 10, 5]} intensity={1.5} castShadow shadow-mapSize-width={1024} shadow-mapSize-height={1024} />
       <Environment preset="city" />
@@ -250,15 +267,32 @@ export function CanvasContainer({
       {tempPoint && <CursorFollower tempPoint={tempPoint} />}
 
       <OrbitControls 
-        enableRotate={!isCameraLocked}
-        enablePan={!isCameraLocked}
+        ref={orbitRef}
+        enableRotate={true}
+        enablePan={true}
         enableZoom={true} 
-        minPolarAngle={Math.PI / 4} 
-        maxPolarAngle={Math.PI / 1.5} 
-        minDistance={2} 
-        maxDistance={20} 
+        minPolarAngle={lockState.vert ? vertRotation : 0} 
+        maxPolarAngle={lockState.vert ? vertRotation : Math.PI} 
+        minAzimuthAngle={lockState.horiz ? horizRotation : -Infinity}
+        maxAzimuthAngle={lockState.horiz ? horizRotation : Infinity}
+        minDistance={zoom * 0.5} 
+        maxDistance={zoom * 2} 
         makeDefault 
         target={[0, cameraTargetY, 0]}
+        onChange={(e) => {
+           if (orbitRef.current && onCameraChange) {
+              const az = orbitRef.current.getAzimuthalAngle();
+              const pol = orbitRef.current.getPolarAngle();
+              
+              // Prevent feedback loops during slider-driven updates
+              if (Math.abs(az - horizRotation) > 0.01 || Math.abs(pol - vertRotation) > 0.01) {
+                  isInternalUpdate.current = true;
+                  onCameraChange(az, pol);
+                  // Release the lock after state has likely propagated
+                  setTimeout(() => { isInternalUpdate.current = false; }, 50);
+              }
+           }
+        }}
       />
       <ContactShadows position={[0, -modelScale * 0.8, 0]} opacity={0.4} scale={10} blur={2} />
     </Canvas>
@@ -266,4 +300,4 @@ export function CanvasContainer({
 }
 
 // Ensures cached memory mapping identical to child meshes bypassing recursive loading lags
-useGLTF.preload('/RiggedBody.glb');
+useGLTF.preload('/new-rigg.glb');
