@@ -29,35 +29,39 @@ export function MeasurementLine({ start, end, label, color = '#56a432', active =
       }}
     >
       <mesh position={start}>
-        <sphereGeometry args={[0.015, 16, 16]} />
-        <meshBasicMaterial color="#ef4444" depthTest={false} transparent opacity={0.9} />
+        <sphereGeometry args={[0.008, 16, 16]} />
+        <meshBasicMaterial color={active ? "#ffffff" : "#ef4444"} depthTest={false} transparent opacity={1} />
       </mesh>
       {end && (
         <>
           <mesh position={end}>
-            <sphereGeometry args={[0.015, 16, 16]} />
-            <meshBasicMaterial color="#ef4444" depthTest={false} transparent opacity={0.9} />
+            <sphereGeometry args={[0.008, 16, 16]} />
+            <meshBasicMaterial color={active ? "#ffffff" : "#ef4444"} depthTest={false} transparent opacity={1} />
           </mesh>
           <Line
             points={[start, end]}
-            color={active ? '#ef4444' : color}
-            lineWidth={1.5}
+            color={active ? '#ffffff' : color}
+            lineWidth={1}
+            transparent
+            opacity={0.8}
             dashed={false}
           />
           {showLabel && (
               <Html position={midPoint} center distanceFactor={8} zIndexRange={[100, 0]}>
                 <div 
-                  className="measurement-tag shadow-glow"
+                  className="measurement-tag glass-panel"
                   style={{
                     color: 'white',
-                    background: '#56a432',
-                    padding: '3px 8px',
-                    borderRadius: '4px',
-                    fontSize: '7px',
-                    fontWeight: '600',
+                    background: active ? 'var(--accent-primary)' : 'rgba(0,0,0,0.6)',
+                    backdropFilter: 'blur(10px)',
+                    padding: '4px 10px',
+                    borderRadius: '20px',
+                    fontSize: '9px',
+                    fontWeight: '700',
                     whiteSpace: 'nowrap',
                     pointerEvents: 'none',
-                    opacity: 0.9
+                    border: active ? '1px solid rgba(255,255,255,0.4)' : '1px solid rgba(255,255,255,0.1)',
+                    boxShadow: '0 4px 12px rgba(0,0,0,0.2)'
                   }}
                 >
                   {label ? label : `${(distance * 15).toFixed(1)} cm`}

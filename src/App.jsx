@@ -64,20 +64,21 @@ function App() {
   });
 
   const [showLabels, setShowLabels] = useState(true);
-  const [modelScale, setModelScale] = useState(2.2);
-  const [zoom, setZoom] = useState(8);
-  const [modelPos, setModelPos] = useState({ x: 0, y: 0, z: 0 }); // Let <Center> handle the verticality
-  const [unit, setUnit] = useState('cm'); // 'cm' or 'mm'
+  const [modelPos, setModelPos] = useState({ x: 0, y: 0, z: 0 }); 
+  const [unit, setUnit] = useState('cm'); 
   const [cameraTargetY, setCameraTargetY] = useState(0); 
   
   const [horizRotation, setHorizRotation] = useState(0);
-  const [vertRotation, setVertRotation] = useState(Math.PI / 2); // 90 degrees (facing center)
+  const [vertRotation, setVertRotation] = useState(Math.PI / 2); 
   const [lockState, setLockState] = useState({ horiz: false, vert: false });
   
-  const [tempPoints, setTempPoints] = useState([]); // Now supports multiple capturing points
+  const [tempPoints, setTempPoints] = useState([]); 
   const [showSummary, setShowSummary] = useState(false);
   const [isTransparent, setIsTransparent] = useState(false); 
   const [theme, setTheme] = useState(() => localStorage.getItem('theme') || 'light');
+  const [viewConfigExpanded, setViewConfigExpanded] = useState(false);
+  const [modelScale, setModelScale] = useState(1.8);
+  const [zoom, setZoom] = useState(8);
 
   const toggleTheme = () => {
     const newTheme = theme === 'light' ? 'dark' : 'light';
@@ -86,21 +87,17 @@ function App() {
   };
 
   const activeMeasurement = measurements.find(m => m.id === activeId);
-  const allCompleted = measurements.every(m => m.completed);
   const categories = [...new Set(initialMeasurements.map(m => m.category))];
 
   const handleSelectTask = (id) => {
     setActiveId(prevId => (prevId === id ? null : id));
-    setTempPoints([]); // Reset capture progress
+    setTempPoints([]); 
     setActiveEditId(null);
   };
 
   const toggleCategory = (category) => {
     const isOpening = !!collapsedCategories[category];
     setCollapsedCategories(prev => ({ ...prev, [category]: !prev[category] }));
-
-    // ANATOMICAL AUTO-ZOOM MATRIX:
-    // When expanding a category, the 3D world physically pans to that specific anatomical region.
     if (isOpening) {
       if (category === 'Torso & Core') setCameraTargetY(0.5);
       if (category === 'Arms') setCameraTargetY(0.5);
@@ -125,15 +122,9 @@ function App() {
   const handleSelectMeasurement = (id) => {
     const item = measurements.find(m => m.id === id);
     if (!item) return;
-
-    // 1. Ensure category is expanded
     setCollapsedCategories(prev => ({ ...prev, [item.category]: false }));
-
-    // 2. Open the fine-tune editor
     setActiveEditId(id);
     setActiveId(null);
-
-    // 3. Scroll into view
     setTimeout(() => {
       const el = document.getElementById(`item-${id}`);
       if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -160,7 +151,6 @@ function App() {
     const b = C.clone().sub(A);
     const cross = a.clone().cross(b);
     if (cross.lengthSq() < 1e-6) return null; 
-    
     const midAB = A.clone().add(B).multiplyScalar(0.5);
     const midAC = A.clone().add(C).multiplyScalar(0.5);
     const n = cross.normalize();
@@ -168,18 +158,16 @@ function App() {
     const pB = n.clone().cross(b).normalize();
     const pAxpB = pA.clone().cross(pB);
     if (pAxpB.lengthSq() < 1e-6) return null;
-    
     const diff = midAC.clone().sub(midAB);
     const diffxpB = diff.clone().cross(pB);
     const t1 = diffxpB.dot(pAxpB) / pAxpB.lengthSq();
     const center = midAB.clone().add(pA.multiplyScalar(t1));
     const radius = center.distanceTo(A);
-    return { center, radius, normal: n }; // Return the 3D orientation normal
+    return { center, radius, normal: n }; 
   };
 
   const handlePointClick = (pointArray) => {
     if (!activeId) return;
-
     if (activeMeasurement.type === 'distance') {
         if (tempPoints.length === 0) {
             setTempPoints([pointArray]);
@@ -188,7 +176,6 @@ function App() {
             const p2 = new THREE.Vector3(...pointArray);
             const distance = p1.distanceTo(p2);
             const scaledDistance = (distance * 15).toFixed(1);
-
             setMeasurements(prev => prev.map(m => {
                 if (m.id === activeId) {
                     return { ...m, startPoint: tempPoints[0], endPoint: pointArray, value: scaledDistance, completed: true };
@@ -203,13 +190,10 @@ function App() {
         if (tempPoints.length < 2) {
             setTempPoints(prev => [...prev, pointArray]);
         } else {
-            // Three point capture completed
             const result = calculateThreePointCircle([...tempPoints, pointArray]);
             if (!result) return;
-
             const circumference = Math.PI * 2 * result.radius;
             const scaledCircumference = (circumference * 15).toFixed(1);
-
             setMeasurements(prev => prev.map(m => {
                 if (m.id === activeId) {
                     return { ...m, center: result.center, radius: result.radius, value: scaledCircumference, completed: true };
@@ -222,36 +206,21 @@ function App() {
     }
   };
 
-  const handleCurveCapture = (center, radius) => {
-    // This is the old hover capture logic, we now prefer 3-point click.
-    // However, I'll keep it as a fallback or hide it for premium feel.
-  };
+  const handleCurveCapture = (center, radius) => {};
 
   const handleResetMeasurement = (id) => {
       setMeasurements(prev => prev.map(m => {
           if (m.id === id) {
-              return { 
-                  ...m, 
-                  value: null, 
-                  startPoint: null, 
-                  endPoint: null, 
-                  center: null, 
-                  radius: null, 
-                  normal: null,
-                  completed: false 
-              };
+              return { ...m, value: null, startPoint: null, endPoint: null, center: null, radius: null, normal: null, completed: false };
           }
           return m;
       }));
-      // Also close editor if open
       if (activeEditId === id) setActiveEditId(null);
   };
 
   const handleManualValueChange = (id, newValue) => {
     setMeasurements(prev => prev.map(m => {
-      if (m.id === id) {
-        return { ...m, value: newValue, completed: true };
-      }
+      if (m.id === id) return { ...m, value: newValue, completed: true };
       return m;
     }));
   };
@@ -262,11 +231,7 @@ function App() {
       if (m.type === 'circumference') {
         const newRadius = Math.max(0.01, m.radius + (deltaMultiplier * 0.015));
         const newCircumference = Math.PI * 2 * newRadius;
-        return {
-          ...m,
-          radius: newRadius,
-          value: (newCircumference * 15).toFixed(1)
-        };
+        return { ...m, radius: newRadius, value: (newCircumference * 15).toFixed(1) };
       }
       else if (m.type === 'distance') {
         const p1 = new THREE.Vector3(...m.startPoint);
@@ -274,11 +239,7 @@ function App() {
         const direction = p2.clone().sub(p1).normalize();
         const newP2 = p2.clone().add(direction.multiplyScalar(deltaMultiplier * 0.05));
         const newDistance = p1.distanceTo(newP2);
-        return {
-          ...m,
-          endPoint: newP2.toArray(),
-          value: (newDistance * 15).toFixed(1)
-        };
+        return { ...m, endPoint: newP2.toArray(), value: (newDistance * 15).toFixed(1) };
       }
       return m;
     }));
@@ -288,7 +249,6 @@ function App() {
     const delta = deltaMultiplier * 0.02;
     setMeasurements(prev => prev.map(m => {
       if (m.id !== id) return m;
-
       if (m.type === 'circumference') {
         const newCenter = m.center.clone();
         newCenter[axis] += delta;
@@ -299,11 +259,7 @@ function App() {
         const p2 = new THREE.Vector3(...m.endPoint);
         p1[axis] += delta;
         p2[axis] += delta;
-        return {
-          ...m,
-          startPoint: p1.toArray(),
-          endPoint: p2.toArray()
-        };
+        return { ...m, startPoint: p1.toArray(), endPoint: p2.toArray() };
       }
       return m;
     }));
@@ -325,17 +281,10 @@ function App() {
       value: formatValue(m.value),
       unit: unit
     }));
-
     const exportData = {
-      metadata: {
-        appName: "Anatomy Metrics 3D",
-        timestamp: new Date().toISOString(),
-        totalMeasurements: completedResults.length,
-        globalUnit: unit
-      },
+      metadata: { appName: "Anatomy Metrics 3D", timestamp: new Date().toISOString(), totalMeasurements: completedResults.length, globalUnit: unit },
       measurements: completedResults
     };
-
     const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
@@ -351,187 +300,15 @@ function App() {
     <div className="fine-tune-row">
       <span style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>{label}</span>
       <div className="fine-tune-controls">
-        <button className="tune-btn" onClick={() => method(id, axis === 'size' ? null : axis, -1)}>
-          <Minus size={14} />
-        </button>
-        <span className="tune-label">
-          {axis === 'size' ? 'Scale' : `Pos ${axis.toUpperCase()}`}
-        </span>
-        <button className="tune-btn" onClick={() => method(id, axis === 'size' ? null : axis, 1)}>
-          <Plus size={14} />
-        </button>
+        <button className="tune-btn" onClick={() => method(id, axis === 'size' ? null : axis, -1)}><Minus size={14} /></button>
+        <span className="tune-label">{axis === 'size' ? 'Scale' : `Pos ${axis.toUpperCase()}`}</span>
+        <button className="tune-btn" onClick={() => method(id, axis === 'size' ? null : axis, 1)}><Plus size={14} /></button>
       </div>
     </div>
   );
 
   return (
     <div className={`app-container ${theme === 'dark' ? 'dark' : ''}`}>
-      <div className="sidebar fade-in">
-        <div className="sidebar-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-          <div>
-            <h1 style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <UserRound size={24} color="var(--accent-primary)" />
-              Anthropometric Workstation
-            </h1>
-            <p>Surgical-grade 3D measurement suite for clinical body analysis.</p>
-          </div>
-          <button 
-            className="btn-icon theme-toggle" 
-            onClick={toggleTheme}
-            style={{ 
-              background: 'var(--border-light)', 
-              border: 'none', 
-              borderRadius: '8px', 
-              padding: '8px',
-              cursor: 'pointer',
-              color: 'var(--text-main)'
-            }}
-          >
-            {theme === 'light' ? <Moon size={18} /> : <Sun size={18} />}
-          </button>
-        </div>
-
-        <div className={`status-indicator ${activeId ? 'measuring' : ''}`}>
-          {activeId ? (
-            activeMeasurement.type === 'circumference'
-              ? <span><strong>Select 3 Points</strong> around the {activeMeasurement.name} ({tempPoints.length}/3)</span>
-              : tempPoints.length > 0
-                ? <span>Click your <strong>END</strong> coordinate directly on custom model</span>
-                : <span>Click your <strong>START</strong> coordinate directly on custom model</span>
-          ) : (
-            <span>Select a section below to begin measuring.</span>
-          )}
-        </div>
-
-        <div className="measurement-list">
-          {categories.map(category => (
-            <div key={category} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              <div
-                className="category-header"
-                style={{ cursor: 'pointer', display: 'flex', justifyContent: 'space-between' }}
-                onClick={() => toggleCategory(category)}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <UserRound size={14} /> {category}
-                </div>
-                {collapsedCategories[category] ? <ChevronDown size={14} /> : <ChevronUp size={14} />}
-              </div>
-
-              {!collapsedCategories[category] && measurements.filter(m => m.category === category).map(item => (
-                <div
-                  key={item.id}
-                  id={`item-${item.id}`}
-                  className={`measurement-item ${activeId === item.id ? 'active' : ''} ${item.completed ? 'completed' : ''} ${activeEditId === item.id ? 'editing' : ''}`}
-                >
-                  <div style={{ display: 'flex', flexDirection: 'column', width: '100%' }}>
-
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
-                          <div className="measurement-info" onClick={() => handleSelectTask(item.id)}>
-                            <span className="measurement-name" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                              {item.type === 'circumference' ? <CircleDashed size={14} color="gray" /> : <Ruler size={14} color="gray" />}
-                              {item.name}
-                            </span>
-                            <span className="measurement-status">
-                              {item.completed ? 'Completed' : (activeId === item.id ? `Measuring... (${tempPoints.length}/${item.type === 'circumference' ? 3 : 2})` : 'Pending')}
-                            </span>
-                          </div>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-                            <div className="measurement-value">
-                              {formatValue(item.value)} <span style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>{unit}</span>
-                            </div>
-
-                            {activeId === item.id ? (
-                               <button 
-                                 className="btn-icon cancel"
-                                 onClick={() => handleSelectTask(item.id)}
-                                 title="Cancel Capture"
-                                 style={{color: '#ef4444', background: 'transparent', border: 'none', cursor: 'pointer', padding: '4px'}}
-                               >
-                                 <X size={18} />
-                               </button>
-                            ) : item.completed ? (
-                              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                <button
-                                  className={`edit-toggle-btn ${activeEditId === item.id ? 'active' : ''}`}
-                                  onClick={(e) => toggleEditor(e, item.id)}
-                                  title="Fine-Tune Spatial & Sizing Calibration"
-                                >
-                                  <Settings2 size={18} />
-                                </button>
-                                <button
-                                  className="btn-icon reset"
-                                  onClick={() => handleResetMeasurement(item.id)}
-                                  title="Clear & Redo Measurement"
-                                  style={{color: 'var(--text-secondary)', background: 'transparent', border: 'none', cursor: 'pointer', padding: '4px'}}
-                                >
-                                  <RotateCcw size={16} />
-                                </button>
-                              </div>
-                            ) : (
-                              <div style={{ width: 25, display: 'flex', justifyContent: 'center', color: 'var(--border-medium)', cursor: 'pointer' }} onClick={() => handleSelectTask(item.id)}>
-                                <Ruler size={16} />
-                              </div>
-                            )}
-                          </div>
-                        </div>
-
-                    {activeEditId === item.id && (
-                      <div className="fine-tune-panel">
-                        <div className="tune-row" style={{ marginBottom: '8px', borderBottom: '1px solid var(--border-light)', paddingBottom: '8px' }}>
-                          <span className="tune-label" style={{ flex: 1 }}>Edit Value ({unit})</span>
-                          <input 
-                            type="text"
-                            value={item.value || ''}
-                            onChange={(e) => handleManualValueChange(item.id, e.target.value)}
-                            style={{
-                              width: '80px',
-                              background: 'var(--bg-app)',
-                              border: '1px solid var(--border-light)',
-                              color: 'var(--text-main)',
-                              borderRadius: '4px',
-                              padding: '2px 6px',
-                              fontSize: '12px',
-                              textAlign: 'right',
-                              outline: 'none',
-                              fontWeight: '600'
-                            }}
-                          />
-                        </div>
-                        {renderTuneRow('Magnitude', 'size', item.id, (id, _, dir) => handleSizeTune(id, dir, item.type))}
-                        {renderTuneRow('Translate X', 'x', item.id, handleMoveTune)}
-                        {renderTuneRow('Translate Y', 'y', item.id, handleMoveTune)}
-                        {renderTuneRow('Translate Z', 'z', item.id, handleMoveTune)}
-                      </div>
-                    )}
-
-                  </div>
-                </div>
-              ))}
-            </div>
-          ))}
-        </div>
-
-        <button
-          className="btn btn-primary"
-          style={{ 
-            marginTop: 'auto', 
-            padding: '12px', 
-            flexShrink: 0,
-            background: 'var(--accent-primary)',
-            color: 'white',
-            border: 'none',
-            borderRadius: '12px',
-            fontWeight: '600',
-            cursor: 'pointer',
-            boxShadow: '0 4px 12px rgba(86, 164, 50, 0.2)'
-          }}
-          disabled={!measurements.some(m => m.completed)}
-          onClick={() => setShowSummary(true)}
-        >
-          View Final Report
-        </button>
-      </div>
-
       <div className="canvas-wrapper">
         <CanvasContainer
           measurements={measurements}
@@ -553,185 +330,397 @@ function App() {
           isTransparent={isTransparent}
           theme={theme}
         />
+
+        <div 
+          className={`view-config glass-panel ${viewConfigExpanded ? 'expanded' : 'collapsed'}`}
+          onClick={() => !viewConfigExpanded && setViewConfigExpanded(true)}
+        >
+          <div className="view-config-header" onClick={(e) => {
+            if (viewConfigExpanded) {
+              e.stopPropagation();
+              setViewConfigExpanded(false);
+            }
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flex: 1 }}>
+              <Settings2 size={18} strokeWidth={2.5} color="var(--accent-primary)" /> 
+              {viewConfigExpanded && <span style={{ fontWeight: 700, fontSize: '13px' }}>View Configuration</span>}
+            </div>
+            {viewConfigExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+          </div>
+
+          {viewConfigExpanded && (
+            <div className="view-config-body fade-in">
+              <div className="config-group">
+                <div className="group-title">Model Transform</div>
+                <div className="config-row">
+                  <span className="config-label">Scale</span>
+                  <input
+                    type="range" min="1" max="4" step="0.1"
+                    value={modelScale}
+                    onChange={(e) => setModelScale(parseFloat(e.target.value))}
+                  />
+                  <span className="config-value">{modelScale.toFixed(1)}x</span>
+                </div>
+                <div className="config-row">
+                  <span className="config-label">Pos X</span>
+                  <input 
+                    type="range" min="-5" max="5" step="0.1" 
+                    value={modelPos.x} 
+                    onChange={(e) => setModelPos(prev => ({ ...prev, x: parseFloat(e.target.value) }))} 
+                  />
+                  <span className="config-value">{modelPos.x.toFixed(1)}</span>
+                </div>
+                <div className="config-row">
+                  <span className="config-label">Pos Y</span>
+                  <input 
+                    type="range" min="-10" max="10" step="0.1" 
+                    value={modelPos.y} 
+                    onChange={(e) => setModelPos(prev => ({ ...prev, y: parseFloat(e.target.value) }))} 
+                  />
+                  <span className="config-value">{modelPos.y.toFixed(1)}</span>
+                </div>
+              </div>
+
+              <div className="config-group">
+                <div className="group-title">Camera & Orbit</div>
+                <div className="config-row">
+                  <span className="config-label">Zoom</span>
+                  <input
+                    type="range" min="3" max="25" step="0.1"
+                    value={zoom}
+                    onChange={(e) => setZoom(parseFloat(e.target.value))}
+                  />
+                  <span className="config-value">{zoom.toFixed(1)}m</span>
+                </div>
+                <div className="config-row">
+                  <span className="config-label">Orbit</span>
+                  <input 
+                    type="range" min={-Math.PI} max={Math.PI} step="0.01" 
+                    value={horizRotation} 
+                    onChange={(e) => setHorizRotation(parseFloat(e.target.value))} 
+                  />
+                  <button 
+                    className={`lock-axis-btn ${lockState.horiz ? 'locked' : ''}`}
+                    onClick={() => toggleLock('horiz')}
+                  >
+                    {lockState.horiz ? <Lock size={12}/> : <Unlock size={12}/>}
+                  </button>
+                </div>
+                <div className="config-row">
+                  <span className="config-label">Tilt</span>
+                  <input 
+                    type="range" min="0" max={Math.PI} step="0.01" 
+                    value={vertRotation} 
+                    onChange={(e) => setVertRotation(parseFloat(e.target.value))} 
+                  />
+                  <button 
+                    className={`lock-axis-btn ${lockState.vert ? 'locked' : ''}`}
+                    onClick={() => toggleLock('vert')}
+                  >
+                    {lockState.vert ? <Lock size={12}/> : <Unlock size={12}/>}
+                  </button>
+                </div>
+              </div>
+
+              <div className="config-group">
+                <div className="group-title">Perspectives</div>
+                <div className="viewpoint-grid">
+                  <button className="viewpoint-btn" onClick={() => setViewpoint(0, Math.PI / 2)}>Front</button>
+                  <button className="viewpoint-btn" onClick={() => setViewpoint(Math.PI, Math.PI / 2)}>Back</button>
+                  <button className="viewpoint-btn" onClick={() => setViewpoint(Math.PI / 2, Math.PI / 2)}>Right</button>
+                  <button className="viewpoint-btn" onClick={() => setViewpoint(-Math.PI / 2, Math.PI / 2)}>Left</button>
+                </div>
+              </div>
+
+              <div className="config-group">
+                <div className="group-title">Visibility & Units</div>
+                <div className="config-row">
+                  <span className="config-label">Labels</span>
+                  <button 
+                    className={`lock-axis-btn ${showLabels ? 'locked' : ''}`}
+                    onClick={() => setShowLabels(!showLabels)}
+                  >
+                    {showLabels ? <Eye size={14} /> : <EyeOff size={14} />}
+                  </button>
+                </div>
+                <div className="config-row">
+                  <span className="config-label">X-Ray</span>
+                  <button 
+                    className={`lock-axis-btn ${isTransparent ? 'locked' : ''}`}
+                    onClick={() => setIsTransparent(!isTransparent)}
+                  >
+                    <Ghost size={14} />
+                  </button>
+                </div>
+                <div className="config-row">
+                  <span className="config-label">Unit</span>
+                  <div className="unit-toggle">
+                    <button className={`unit-btn ${unit === 'cm' ? 'active' : ''}`} onClick={() => setUnit('cm')}>CM</button>
+                    <button className={`unit-btn ${unit === 'mm' ? 'active' : ''}`} onClick={() => setUnit('mm')}>MM</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
 
-      <div className="view-config glass-panel fade-in" style={{ width: '300px', flexShrink: 0 }}>
-        <div className="view-config-header">
-          <Maximize size={14} /> View Configuration
-        </div>
-
-        <div className="view-config-body">
-            <div className="config-row">
-              <span className="config-label">Model Height</span>
-              <input
-                type="range" min="1" max="4" step="0.1"
-                value={modelScale}
-                onChange={(e) => setModelScale(parseFloat(e.target.value))}
-              />
-              <span className="config-value">{modelScale.toFixed(1)}x</span>
+      <div className="sidebar fade-in">
+        <div className="sidebar-header" style={{ marginBottom: '8px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+            <div style={{ 
+              background: 'rgba(86, 164, 50, 0.1)', 
+              padding: '10px', 
+              borderRadius: '14px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}>
+              <UserRound size={28} color="var(--accent-primary)" strokeWidth={2.5} />
             </div>
-            <div className="config-row">
-              <span className="config-label">Camera Zoom</span>
-              <input
-                type="range" min="3" max="25" step="0.1"
-                value={zoom}
-                onChange={(e) => setZoom(parseFloat(e.target.value))}
-              />
-              <span className="config-value">{zoom.toFixed(1)}m</span>
-            </div>
-
-              <div className="config-row">
-                <span className="config-label">Translate X</span>
-                <input 
-                  type="range" min="-5" max="5" step="0.1" 
-                  value={modelPos.x} 
-                  onChange={(e) => setModelPos(prev => ({ ...prev, x: parseFloat(e.target.value) }))} 
-                />
-                <span className="config-value">{modelPos.x.toFixed(1)}</span>
-              </div>
-              <div className="config-row">
-                <span className="config-label">Translate Y</span>
-                <input 
-                  type="range" min="-10" max="10" step="0.1" 
-                  value={modelPos.y} 
-                  onChange={(e) => setModelPos(prev => ({ ...prev, y: parseFloat(e.target.value) }))} 
-                />
-                <span className="config-value">{modelPos.y.toFixed(1)}</span>
-              </div>
-              <div className="config-row">
-                <span className="config-label">Translate Z</span>
-                <input 
-                  type="range" min="-5" max="5" step="0.1" 
-                  value={modelPos.z} 
-                  onChange={(e) => setModelPos(prev => ({ ...prev, z: parseFloat(e.target.value) }))} 
-                />
-                <span className="config-value">{modelPos.z.toFixed(1)}</span>
-              </div>
-
-              <div className="config-row">
-                <span className="config-label">Horizontal Rot.</span>
-              <input 
-                type="range" min={-Math.PI} max={Math.PI} step="0.01" 
-                value={horizRotation} 
-                onChange={(e) => setHorizRotation(parseFloat(e.target.value))} 
-              />
-              <button 
-                className={`lock-axis-btn ${lockState.horiz ? 'locked' : ''}`}
-                onClick={() => toggleLock('horiz')}
-                title="Lock Horizontal Orbit"
-              >
-                {lockState.horiz ? <Lock size={12}/> : <Unlock size={12}/>}
-              </button>
-            </div>
-
-            <div className="config-row">
-              <span className="config-label">Vertical Tilt</span>
-              <input 
-                type="range" min="0" max={Math.PI} step="0.01" 
-                value={vertRotation} 
-                onChange={(e) => setVertRotation(parseFloat(e.target.value))} 
-              />
-              <button 
-                className={`lock-axis-btn ${lockState.vert ? 'locked' : ''}`}
-                onClick={() => toggleLock('vert')}
-                title="Lock Vertical Tilt"
-              >
-                {lockState.vert ? <Lock size={12}/> : <Unlock size={12}/>}
-              </button>
-            </div>
-
-              <div className="config-row" style={{ marginTop: '8px', borderTop: '1px solid var(--border-light)', paddingTop: '12px' }}>
-                <span className="config-label">Standard Perspectives</span>
-              </div>
-              <div className="viewpoint-grid">
-                <button className="viewpoint-btn" onClick={() => setViewpoint(0, Math.PI / 2)}>Front</button>
-                <button className="viewpoint-btn" onClick={() => setViewpoint(Math.PI, Math.PI / 2)}>Back</button>
-                <button className="viewpoint-btn" onClick={() => setViewpoint(Math.PI / 2, Math.PI / 2)}>Right</button>
-                <button className="viewpoint-btn" onClick={() => setViewpoint(-Math.PI / 2, Math.PI / 2)}>Left</button>
-                <button className="viewpoint-btn" onClick={() => setViewpoint(0, 0.05)}>Top</button>
-                <button className="viewpoint-btn" onClick={() => setViewpoint(0, Math.PI - 0.05)}>Bottom</button>
-              </div>
-
-              <div className="config-row" style={{ marginTop: '12px' }}>
-                <span className="config-label">Annotation Labels</span>
-                <button 
-                  className={`lock-axis-btn ${showLabels ? 'locked' : ''}`}
-                  onClick={() => setShowLabels(!showLabels)}
-                  title="Toggle Visibility of 3D Measurement Tags"
-                >
-                  {showLabels ? <Eye size={14} /> : <EyeOff size={14} />}
-                </button>
-              </div>
-
-              <div className="config-row" style={{ marginTop: '4px' }}>
-                <span className="config-label">X-Ray Mode</span>
-                <button 
-                  className={`lock-axis-btn ${isTransparent ? 'locked' : ''}`}
-                  onClick={() => setIsTransparent(!isTransparent)}
-                  title="Toggle Model Transparency"
-                >
-                  <Ghost size={14} />
-                </button>
-              </div>
-
-              <div className="config-row" style={{ marginTop: '4px' }}>
-              <span className="config-label">Measuring Unit</span>
-              <div className="unit-toggle">
-                <button
-                  className={`unit-btn ${unit === 'cm' ? 'active' : ''}`}
-                  onClick={() => setUnit('cm')}
-                >cm</button>
-                <button
-                  className={`unit-btn ${unit === 'mm' ? 'active' : ''}`}
-                  onClick={() => setUnit('mm')}
-                >mm</button>
-              </div>
-            </div>
+            <button 
+              className="theme-toggle" 
+              onClick={toggleTheme}
+              style={{ 
+                background: 'var(--border-light)', 
+                border: 'none', 
+                borderRadius: '12px', 
+                width: '40px',
+                height: '40px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
+                color: 'var(--text-main)'
+              }}
+            >
+              {theme === 'light' ? <Moon size={20} /> : <Sun size={20} />}
+            </button>
           </div>
+          <h1>Anthropometric Workstation</h1>
+          <p>Surgical-grade 3D measurement suite for clinical body analysis and data extraction.</p>
         </div>
+
+        <div className={`status-indicator ${activeId ? 'measuring' : ''}`} style={{ marginBottom: '20px' }}>
+          {activeId ? (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <div className="pulse-indicator" style={{ width: '8px', height: '8px', borderRadius: '50%', background: 'var(--accent-primary)' }} />
+              {activeMeasurement.type === 'circumference'
+                ? <span>Select <strong>3 points</strong> for {activeMeasurement.name} ({tempPoints.length}/3)</span>
+                : <span>Click <strong>{tempPoints.length === 0 ? 'START' : 'END'}</strong> coordinate on model</span>
+              }
+            </div>
+          ) : (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <CircleDashed size={14} />
+              <span>Select a section below to begin analysis</span>
+            </div>
+          )}
+        </div>
+
+        <div className="measurement-list" style={{ flex: 1 }}>
+          {categories.map(category => (
+            <div key={category} style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '16px' }}>
+              <div
+                className="category-header"
+                style={{ 
+                  cursor: 'pointer', 
+                  display: 'flex', 
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  padding: '4px 8px'
+                }}
+                onClick={() => toggleCategory(category)}
+              >
+                <div style={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  gap: '10px', 
+                  fontSize: '11px', 
+                  fontWeight: 800, 
+                  textTransform: 'uppercase', 
+                  letterSpacing: '0.1em',
+                  color: 'var(--text-secondary)'
+                }}>
+                  {category}
+                </div>
+                {collapsedCategories[category] ? <ChevronDown size={14} color="var(--text-secondary)" /> : <ChevronUp size={14} color="var(--text-secondary)" />}
+              </div>
+
+              {!collapsedCategories[category] && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  {measurements.filter(m => m.category === category).map(item => (
+                    <div
+                      key={item.id}
+                      id={`item-${item.id}`}
+                      className={`measurement-item ${activeId === item.id ? 'active' : ''} ${item.completed ? 'completed' : ''} ${activeEditId === item.id ? 'editing' : ''}`}
+                    >
+                      <div style={{ display: 'flex', flexDirection: 'column', width: '100%' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
+                          <div className="measurement-info" style={{ flex: 1 }} onClick={() => handleSelectTask(item.id)}>
+                            <div className="measurement-name" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                              {item.completed ? <CheckCircle size={14} color="var(--accent-primary)" /> : <CircleDashed size={14} color="var(--text-secondary)" />}
+                              {item.name}
+                            </div>
+                            <div style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '2px' }}>
+                              {item.completed ? 'Scan Ready' : (activeId === item.id ? 'Capturing...' : 'Awaiting Data')}
+                            </div>
+                          </div>
+                          
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                            <div className="measurement-value">
+                              {formatValue(item.value)} 
+                              <span style={{ fontSize: '11px', fontWeight: 600, marginLeft: '2px', color: 'var(--text-secondary)', textTransform: 'uppercase' }}>{unit}</span>
+                            </div>
+
+                            {item.completed && activeId !== item.id && (
+                              <button
+                                className={`lock-axis-btn ${activeEditId === item.id ? 'locked' : ''}`}
+                                onClick={(e) => toggleEditor(e, item.id)}
+                                style={{ width: '32px', height: '32px' }}
+                              >
+                                <Settings2 size={16} />
+                              </button>
+                            )}
+                            
+                            {activeId === item.id && (
+                               <button 
+                                 className="lock-axis-btn"
+                                 onClick={(e) => { e.stopPropagation(); handleSelectTask(item.id); }}
+                                 style={{ background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444' }}
+                               >
+                                 <X size={16} />
+                               </button>
+                            )}
+                          </div>
+                        </div>
+
+                        {activeEditId === item.id && (
+                          <div className="fine-tune-panel fade-in" style={{ marginTop: '16px', paddingTop: '16px', borderTop: '1px solid var(--border-light)' }}>
+                            <div className="tune-row" style={{ marginBottom: '12px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                              <span style={{ fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', color: 'var(--text-secondary)' }}>Manual Override</span>
+                              <input 
+                                type="text"
+                                value={item.value || ''}
+                                onChange={(e) => handleManualValueChange(item.id, e.target.value)}
+                                style={{
+                                  width: '80px',
+                                  background: 'var(--bg-app)',
+                                  border: '1px solid var(--border-medium)',
+                                  color: 'var(--text-main)',
+                                  borderRadius: '8px',
+                                  padding: '4px 8px',
+                                  fontSize: '13px',
+                                  textAlign: 'right',
+                                  fontFamily: 'monospace',
+                                  outline: 'none',
+                                  fontWeight: '700'
+                                }}
+                              />
+                            </div>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                              {renderTuneRow('Calibration', 'size', item.id, (id, _, dir) => handleSizeTune(id, dir, item.type))}
+                              {renderTuneRow('Axis X', 'x', item.id, handleMoveTune)}
+                              {renderTuneRow('Axis Y', 'y', item.id, handleMoveTune)}
+                              {renderTuneRow('Axis Z', 'z', item.id, handleMoveTune)}
+                            </div>
+                            <button 
+                              className="btn btn-outline" 
+                              onClick={() => handleResetMeasurement(item.id)}
+                              style={{ width: '100%', marginTop: '16px', fontSize: '11px', background: 'transparent', border: '1px solid var(--border-medium)', color: 'var(--text-secondary)', padding: '8px', borderRadius: '10px' }}
+                            >
+                              <RotateCcw size={12} style={{ marginRight: '6px' }} /> Recalibrate Point
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+
+        <button
+          className="btn btn-primary"
+          style={{ 
+            marginTop: '24px', 
+            padding: '16px', 
+            width: '100%',
+            fontSize: '15px',
+            boxShadow: '0 8px 24px rgba(86, 164, 50, 0.2)'
+          }}
+          disabled={!measurements.some(m => m.completed)}
+          onClick={() => setShowSummary(true)}
+        >
+          <Maximize size={18} style={{ marginRight: '8px' }} strokeWidth={2.5} /> Generate Full Bio-Report
+        </button>
+      </div>
 
       {showSummary && (
         <div className="modal-overlay fade-in">
-          <div className="modal-content glass-panel" style={{ width: '600px', maxHeight: '90vh', overflowY: 'auto' }}>
-            <div className="modal-header">
-              <h2>Measurement Report</h2>
-              <p>Review comprehensive biometric points extracted from 3D scanning.</p>
-            </div>
-
-            <div className="results-grid" style={{ maxHeight: '400px', overflowY: 'auto' }}>
-              {categories.map(category => (
-                <div key={`modal-${category}`} style={{ gridColumn: '1 / -1', marginTop: '12px' }}>
-                  <h3 style={{ fontSize: '14px', color: 'var(--text-secondary)', borderBottom: '1px solid var(--border-light)', paddingBottom: '4px' }}>{category}</h3>
-                  <div className="results-grid" style={{ marginTop: '12px' }}>
-                    {measurements.filter(m => m.category === category).map(item => (
-                      <div key={item.id} className="result-card">
-                        <div className="result-label" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                          {item.type === 'circumference' ? <CircleDashed size={12} /> : <Ruler size={12} />}
-                          {item.name}
-                        </div>
-                        <div className="result-value">{formatValue(item.value)} <span style={{ fontSize: '14px', color: 'var(--text-secondary)' }}>{unit}</span></div>
-                      </div>
-                    ))}
-                  </div>
+          <div className="modal-content" style={{ width: '640px', maxHeight: '85vh', display: 'flex', flexDirection: 'column' }}>
+            <div className="modal-header" style={{ marginBottom: '32px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                <div>
+                  <h2 style={{ fontSize: '28px', marginBottom: '8px' }}>Spatial Identity Report</h2>
+                  <p style={{ color: 'var(--text-secondary)' }}>Comprehensive biometric data extracted from clinical 3D reconstruction.</p>
                 </div>
-              ))}
+                <button 
+                  onClick={() => setShowSummary(false)} 
+                  style={{ background: 'var(--border-light)', border: 'none', borderRadius: '12px', padding: '8px', cursor: 'pointer' }}
+                >
+                  <X size={20} />
+                </button>
+              </div>
             </div>
 
-            <div style={{ display: 'flex', gap: '12px', marginTop: '16px' }}>
-              <button className="btn btn-primary" style={{ flex: 1 }} onClick={handleExportJSON}>
-                <Download size={16} style={{ marginRight: '8px' }} /> Download JSON
+            <div className="results-list" style={{ flex: 1, overflowY: 'auto', paddingRight: '12px', marginBottom: '32px' }}>
+              {categories.map(category => {
+                const results = measurements.filter(m => m.category === category && m.completed);
+                if (results.length === 0) return null;
+                return (
+                  <div key={`modal-${category}`} style={{ marginBottom: '24px' }}>
+                    <div style={{ fontSize: '11px', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--text-secondary)', marginBottom: '12px', borderBottom: '1px solid var(--border-light)', paddingBottom: '4px' }}>
+                      {category}
+                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                      {results.map(item => (
+                        <div key={item.id} style={{ background: 'var(--bg-app)', padding: '16px', borderRadius: '16px', border: '1px solid var(--border-light)' }}>
+                          <div style={{ fontSize: '12px', color: 'var(--text-secondary)', marginBottom: '6px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            {item.type === 'circumference' ? <CircleDashed size={10} /> : <Ruler size={10} />}
+                            {item.name}
+                          </div>
+                          <div style={{ fontSize: '22px', fontWeight: 800, color: 'var(--accent-primary)', fontFamily: 'SF Mono, monospace' }}>
+                            {formatValue(item.value)}
+                            <span style={{ fontSize: '12px', marginLeft: '4px', textTransform: 'uppercase' }}>{unit}</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            <div style={{ display: 'flex', gap: '12px' }}>
+              <button className="btn btn-primary" style={{ flex: 2, padding: '14px' }} onClick={handleExportJSON}>
+                <Download size={18} style={{ marginRight: '8px' }} /> Export Clinical JSON
               </button>
-              <button className="btn btn-primary" style={{ flex: 1 }} onClick={() => setShowSummary(false)}>
-                Confirm & Save
-              </button>
-              <button className="btn btn-outline" style={{ flex: 1 }} onClick={handleReset}>
-                <RotateCcw size={16} /> Reset All
+              <button 
+                className="btn" 
+                style={{ flex: 1, background: 'var(--border-light)', color: 'var(--text-main)', padding: '14px' }} 
+                onClick={handleReset}
+              >
+                <RotateCcw size={16} style={{ marginRight: '8px' }} /> Reset System
               </button>
             </div>
           </div>
         </div>
       )}
     </div>
+
   );
 }
 

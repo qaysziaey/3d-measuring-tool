@@ -7,7 +7,7 @@ import * as THREE from 'three';
 import { CircleDashed } from 'lucide-react';
 
 // Generates a responsive bounding Ring perfectly sized over hovering slices
-function ContourRing({ id, center, radius, label, color = "#14b8a6", showLabel = true, unit = 'cm', onSelect, normal = [0, 1, 0] }) {
+function ContourRing({ id, center, radius, label, color = "#56a432", showLabel = true, unit = 'cm', onSelect, normal = [0, 1, 0], active = false }) {
   if (!center) return null;
 
   const formatLabel = (val) => {
@@ -17,8 +17,6 @@ function ContourRing({ id, center, radius, label, color = "#14b8a6", showLabel =
 
   const exactCircumference = Math.PI * 2 * radius;
   
-  // High-precision orientation matrix: 
-  // Aligns the Torus local Z-axis (normal) to the calculated 3D plane
   const orientationRef = useRef();
   useEffect(() => {
     if (orientationRef.current) {
@@ -26,7 +24,6 @@ function ContourRing({ id, center, radius, label, color = "#14b8a6", showLabel =
             const n = new THREE.Vector3(...(Array.isArray(normal) ? normal : [normal.x, normal.y, normal.z])).normalize();
             orientationRef.current.lookAt(new THREE.Vector3().addVectors(orientationRef.current.position, n));
         } else {
-            // Default horizontal slice for hover
             orientationRef.current.rotation.set(Math.PI / 2, 0, 0);
         }
     }
@@ -43,34 +40,36 @@ function ContourRing({ id, center, radius, label, color = "#14b8a6", showLabel =
       position={[center.x, center.y, center.z]}
     >
       <mesh>
-        <torusGeometry args={[radius, 0.008, 12, 128]} />
+        <torusGeometry args={[radius, 0.005, 12, 128]} />
         <meshStandardMaterial 
-          color="#56a432" 
-          emissive="#56a432"
-          emissiveIntensity={0.5}
+          color={active ? "#ffffff" : "#56a432"} 
+          emissive={active ? "#ffffff" : "#56a432"}
+          emissiveIntensity={active ? 1 : 0.5}
           transparent 
-          opacity={0.9} 
+          opacity={0.8} 
         />
       </mesh>
       
         {showLabel && (
           <Html position={[radius + 0.05, 0, 0]} center distanceFactor={8} zIndexRange={[100, 0]}>
             <div 
-              className="measurement-tag shadow-glow"
+              className="measurement-tag glass-panel"
               style={{
                 color: 'white',
-                background: '#56a432',
-                padding: '3px 8px',
-                borderRadius: '4px',
-                fontSize: '7px',
-                fontWeight: '600',
+                background: active ? 'var(--accent-primary)' : 'rgba(0,0,0,0.6)',
+                backdropFilter: 'blur(10px)',
+                padding: '4px 10px',
+                borderRadius: '20px',
+                fontSize: '9px',
+                fontWeight: '700',
                 whiteSpace: 'nowrap',
                 pointerEvents: 'none',
-                opacity: 0.9
+                border: active ? '1px solid rgba(255,255,255,0.4)' : '1px solid rgba(255,255,255,0.1)',
+                boxShadow: '0 4px 12px rgba(0,0,0,0.2)'
               }}
             >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                <CircleDashed size={8} />
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <CircleDashed size={10} />
                 {label ? label : `${formatLabel(exactCircumference * 15)} ${unit}`}
               </div>
             </div>
@@ -86,7 +85,7 @@ function CursorFollower({ tempPoints }) {
     <>
       {tempPoints.map((pt, i) => (
         <mesh key={i} position={pt}>
-          <sphereGeometry args={[0.015, 16, 16]} />
+          <sphereGeometry args={[0.008, 16, 16]} />
           <meshBasicMaterial color="#ef4444" depthTest={false} transparent opacity={1} />
         </mesh>
       ))}
