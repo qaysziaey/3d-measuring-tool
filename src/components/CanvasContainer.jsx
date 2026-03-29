@@ -227,9 +227,7 @@ export function CanvasContainer({
       clock={new THREE.Timer()}
       camera={{ position: [0, 2, 8], fov: 45 }}
       style={{ 
-        background: theme === 'dark' 
-          ? 'radial-gradient(circle at center, #222222 0%, #111111 100%)' 
-          : 'radial-gradient(circle at center, #ffffff 0%, #dfe4ea 100%)' 
+        background: 'radial-gradient(circle at center, #56a432 0%, #4a8d2b 100%)' 
       }}
     >
       <ambientLight intensity={0.8} />
@@ -237,12 +235,12 @@ export function CanvasContainer({
       <Environment preset="city" />
       
       <ContactShadows 
-        position={[0, -4.2, 0]}
-        opacity={0.35} 
-        blur={2} 
+        position={[0, -modelScale * 0.8, 0]}
+        opacity={0.4} 
+        blur={2.5} 
         far={10} 
         resolution={1024} 
-        color={theme === 'dark' ? '#000000' : '#444444'} 
+        color="#1a340f" 
       />
 
       <Suspense fallback={null}>
@@ -330,7 +328,7 @@ export function CanvasContainer({
            }
         }}
       />
-      <ContactShadows position={[0, -modelScale * 0.8, 0]} opacity={0.4} scale={10} blur={2} />
+
     </Canvas>
   );
 }
