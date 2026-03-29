@@ -51,7 +51,10 @@ export function CustomModel({ onPointerDown, onPointerMove, onPointerOut, scale 
     >
       <primitive object={scene} />
       {meshes.map((mesh) => 
-        createPortal(<Outlines thickness={0.015} color="#56a432" opacity={1} />, mesh)
+        createPortal(
+          <Outlines thickness={0.0025} color={isTransparent ? "#4b5563" : "#ffd700"} opacity={1} angle={Math.PI} />, 
+          mesh
+        )
       )}
     </group>
   );

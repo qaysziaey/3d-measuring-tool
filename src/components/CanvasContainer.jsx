@@ -169,57 +169,9 @@ export function CanvasContainer({
   };
 
   const handlePointerMove = (e) => {
+    // We intentionally removed the wobbly raycasted auto-ring hover feature here.
+    // The user will cleanly use the stable 3-point dot method to define circumferences.
     e.stopPropagation();
-    if (activeMeasurement?.type === 'circumference' && e.face) {
-        
-        // ANATOMICAL ISOLATION MATRIX: 
-        // Blocks Ring rendering if intersection occurs maliciously far away from targeted Armature bone!
-        if (activeMeasurement.targetBones && skeletonBones.length > 0) {
-            let closestBone = null;
-            let minDist = Infinity;
-            const tempVec = new THREE.Vector3();
-            
-            // Loop internal Rig determining absolute nearest biological center structure
-            skeletonBones.forEach(bone => {
-                bone.getWorldPosition(tempVec);
-                const dist = e.point.distanceTo(tempVec);
-                if (dist < minDist) {
-                    minDist = dist;
-                    closestBone = bone;
-                }
-            });
-            
-            // Reject Physics Engine mapping if hovered biological mesh doesn't explicitly match schema string constraints
-            if (closestBone) {
-                const boneName = closestBone.name.toLowerCase();
-                // Professional matching handles mixamorig_ prefixes and anatomical variants (e.g. ArmL -> leftarm)
-                const isAllowed = activeMeasurement.targetBones.some(target => {
-                    const t = target.toLowerCase();
-                    return boneName.includes(t) || 
-                           (t.includes('left') && boneName.includes('left')) ||
-                           (t.includes('right') && boneName.includes('right'));
-                });
-                
-                if (!isAllowed) {
-                    setHoverData(null); 
-                    return;
-                }
-            }
-        }
-        
-        const normal = e.face.normal.clone().transformDirection(e.object.matrixWorld).normalize();
-        const reverseDir = normal.clone().negate();
-        const origin = e.point.clone().add(reverseDir.clone().multiplyScalar(0.01));
-        const raycaster = new THREE.Raycaster(origin, reverseDir);
-        const intersects = raycaster.intersectObject(e.object, true);
-        
-        if (intersects.length > 0) {
-            const oppositePoint = intersects[0].point;
-            const center = e.point.clone().add(oppositePoint).multiplyScalar(0.5);
-            const radius = e.point.distanceTo(oppositePoint) / 2;
-            setHoverData({ center, radius });
-        }
-    }
   };
 
   const handlePointerOut = () => setHoverData(null);
