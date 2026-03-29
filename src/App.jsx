@@ -232,7 +232,7 @@ function App() {
   });
 
   const [showLabels, setShowLabels] = useState(true);
-  const [modelPos, setModelPos] = useState({ x: 0, y: 0, z: 0 }); 
+  const [modelPos, setModelPos] = useState({ x: 0, y: -1.4, z: 0 });
   const [unit, setUnit] = useState('cm'); 
   const [cameraTargetY, setCameraTargetY] = useState(0); 
   

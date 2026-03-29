@@ -31,9 +31,19 @@ export function CustomModel({ onPointerDown, onPointerMove, onPointerOut, scale 
     });
   }, [meshes, isTransparent]);
 
+  // Auto-lift: measure the GLB's bounding box in its own local space (scale=1),
+  // then offset Y so the model's lowest point sits exactly at y=0.
+  const yOffset = useMemo(() => {
+    const box = new THREE.Box3().setFromObject(scene);
+    // box.min.y is the foot level in the GLB's local (unscaled) space.
+    // Negate so the group position pushes feet up to world y=0.
+    return -box.min.y;
+  }, [scene]);
+
   return (
     <group
-      position={[0, -scale * 0.8, 0]}
+      // yOffset is in local units; multiply by scale to convert to world units.
+      position={[0, yOffset * scale, 0]}
       scale={scale}
       onPointerDown={onPointerDown}
       onPointerMove={onPointerMove}

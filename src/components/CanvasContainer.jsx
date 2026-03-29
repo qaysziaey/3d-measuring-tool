@@ -117,27 +117,31 @@ export function CanvasContainer({
 }) {
   const [hoverData, setHoverData] = useState(null);
   const orbitRef = useRef();
-  const isInternalUpdate = useRef(false);
+  // Flag set ONLY when a UI element (slider/button) drives camera change
+  // — prevents the OrbitControls onChange from echo-looping the state back.
+  const programmaticUpdate = useRef(false);
 
-  // Synchronize 3D Camera with UI Sliders
+  // Synchronize 3D Camera with UI Sliders & Perspective Buttons
   useEffect(() => {
-    if (!orbitRef.current || isInternalUpdate.current) return;
+    if (!orbitRef.current) return;
     
-    // We update the camera position based on the spherical coordinates from the sliders
     const controls = orbitRef.current;
     const distance = controls.object.position.distanceTo(controls.target);
     
-    // Convert azimuthal/polar to Cartesian relative to target
+    // Convert spherical (azimuth + polar) → Cartesian offset from target
     const x = distance * Math.sin(vertRotation) * Math.sin(horizRotation);
     const y = distance * Math.cos(vertRotation);
     const z = distance * Math.sin(vertRotation) * Math.cos(horizRotation);
     
+    programmaticUpdate.current = true;
     controls.object.position.set(
       controls.target.x + x,
       controls.target.y + y,
       controls.target.z + z
     );
     controls.update();
+    // Release the echo-guard after React state has propagated
+    setTimeout(() => { programmaticUpdate.current = false; }, 60);
   }, [horizRotation, vertRotation]);
 
   const format3DLabel = (cmVal) => {
@@ -235,7 +239,7 @@ export function CanvasContainer({
       <Environment preset="city" />
       
       <ContactShadows 
-        position={[0, -modelScale * 0.8, 0]}
+        position={[modelPos.x, modelPos.y, modelPos.z]}
         opacity={0.4} 
         blur={2.5} 
         far={10} 
@@ -244,17 +248,18 @@ export function CanvasContainer({
       />
 
       <Suspense fallback={null}>
-        <group position={[modelPos.x, modelPos.y, modelPos.z]}>
-          <Center>
-            <CustomModel 
-              onPointerDown={handlePointerDown} 
-              onPointerMove={handlePointerMove}
-              onPointerOut={handlePointerOut}
-              modelPath="/new-rigg.glb" 
-              scale={modelScale} 
-              isTransparent={isTransparent}
-            />
-          </Center>
+        {/* No <Center> — it shifts the mesh BBOX origin and breaks the orbit pivot.
+            The group position drives placement; model sits at origin so OrbitControls
+            target always points to the model centre. */}
+        <group position={[modelPos.x, modelPos.y + 0, modelPos.z]}>
+          <CustomModel 
+            onPointerDown={handlePointerDown} 
+            onPointerMove={handlePointerMove}
+            onPointerOut={handlePointerOut}
+            modelPath="/new-rigg.glb" 
+            scale={modelScale} 
+            isTransparent={isTransparent}
+          />
         </group>
       </Suspense>
 
@@ -304,29 +309,30 @@ export function CanvasContainer({
 
       <OrbitControls 
         ref={orbitRef}
-        enableRotate={false}
+        enableRotate={true}
         enablePan={false}
-        enableZoom={true} 
-        minPolarAngle={lockState.vert ? vertRotation : 0} 
-        maxPolarAngle={lockState.vert ? vertRotation : Math.PI} 
+        enableZoom={true}
+        // Tilt (polar) is ALWAYS pinned to the slider value — mouse cannot change it.
+        // Only the "Tilt" slider drives the vertical angle.
+        minPolarAngle={vertRotation}
+        maxPolarAngle={vertRotation}
+        // Horizontal orbit is free unless the user has locked it.
         minAzimuthAngle={lockState.horiz ? horizRotation : -Infinity}
         maxAzimuthAngle={lockState.horiz ? horizRotation : Infinity}
         minDistance={zoom * 0.5} 
         maxDistance={zoom * 2} 
         makeDefault 
+        // Target ONLY tracks the vertical body part focus (cameraTargetY).
+        // It does NOT track modelPos. This allows modelPos to act as a true visual pan!
         target={[0, cameraTargetY, 0]}
-        onChange={(e) => {
+        onChange={() => {
+           // Only echo the azimuth back to state when the user is dragging.
+           // Polar angle is always slider-driven so we never echo it.
+           if (programmaticUpdate.current) return;
            if (orbitRef.current && onCameraChange) {
               const az = orbitRef.current.getAzimuthalAngle();
-              const pol = orbitRef.current.getPolarAngle();
-              
-              // Prevent feedback loops during slider-driven updates
-              if (Math.abs(az - horizRotation) > 0.01 || Math.abs(pol - vertRotation) > 0.01) {
-                  isInternalUpdate.current = true;
-                  onCameraChange(az, pol);
-                  // Release the lock after state has likely propagated
-                  setTimeout(() => { isInternalUpdate.current = false; }, 50);
-              }
+              // Pass current vertRotation unchanged — tilt never comes from mouse
+              onCameraChange(az, vertRotation);
            }
         }}
       />
