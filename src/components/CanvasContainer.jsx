@@ -105,6 +105,7 @@ export function CanvasContainer({
   lockState,
   onCameraChange,
   showLabels,
+  modelPath,
   modelScale,
   zoom,
   modelPos,
@@ -152,7 +153,7 @@ export function CanvasContainer({
   };
   
   // Robust skeletal extraction traversing the entire GLTF tree for deep rig architectures
-  const { scene, nodes } = useGLTF('/new-rigg.glb');
+  const { scene, nodes } = useGLTF(modelPath || '/new-rigg.glb');
   const skeletonBones = useMemo(() => {
     const bones = [];
     scene.traverse(node => {
@@ -209,7 +210,7 @@ export function CanvasContainer({
             onPointerDown={handlePointerDown} 
             onPointerMove={handlePointerMove}
             onPointerOut={handlePointerOut}
-            modelPath="/new-rigg.glb" 
+            modelPath={modelPath || '/new-rigg.glb'} 
             scale={modelScale} 
             ghostOpacity={ghostOpacity}
             isTransparent={isTransparent}

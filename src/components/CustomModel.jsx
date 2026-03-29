@@ -3,8 +3,8 @@ import { useGLTF, Outlines } from '@react-three/drei';
 import { createPortal } from '@react-three/fiber';
 import * as THREE from 'three';
 
-export function CustomModel({ onPointerDown, onPointerMove, onPointerOut, scale = 2.2, isTransparent = false, ghostOpacity = 0.05 }) {
-  const { scene } = useGLTF('/new-rigg.glb');
+export function CustomModel({ onPointerDown, onPointerMove, onPointerOut, scale = 2.2, isTransparent = false, ghostOpacity = 0.05, modelPath = '/new-rigg.glb' }) {
+  const { scene } = useGLTF(modelPath);
 
   const meshes = useMemo(() => {
     const list = [];
@@ -62,3 +62,4 @@ export function CustomModel({ onPointerDown, onPointerMove, onPointerOut, scale 
 }
 
 useGLTF.preload('/new-rigg.glb');
+useGLTF.preload('/MaleMesh.glb');

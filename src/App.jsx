@@ -249,6 +249,22 @@ function App() {
   const [modelScale, setModelScale] = useState(1.8);
   const [zoom, setZoom] = useState(7); // Tighter zoom to reduce empty side space
   const [ghostOpacity, setGhostOpacity] = useState(0.05);
+  const [modelPath, setModelPath] = useState('/new-rigg.glb');
+
+  const handleGenderSwitch = (path) => {
+    if (modelPath === path) return;
+    setModelPath(path);
+    setMeasurements(initialMeasurements);
+    setTempPoints([]);
+    setActiveId(null);
+    // The Male body mesh is natively significantly larger inside the .glb architecture.
+    // Resetting the UI scale manually here guarantees it fits comfortably 
+    // inside the viewport upon swapping without the user needing to manually un-zoom.
+    setModelScale(path === '/MaleMesh.glb' ? 1.4 : 1.8);
+    // The Male torso's vertical center of gravity is significantly higher than the female rig.
+    // Dynamically sliding the vertical offset natively centers the camera perfectly on load.
+    setModelPos({ x: 0, y: path === '/MaleMesh.glb' ? -1.8 : -1.4, z: 0 });
+  };
 
   const t = translations[lang];
 
@@ -488,6 +504,7 @@ function App() {
     <div className={`app-container ${theme === 'dark' ? 'dark' : ''}`}>
       <div className="canvas-wrapper">
         <CanvasContainer
+          modelPath={modelPath}
           measurements={measurements}
           activeMeasurement={activeMeasurement}
           tempPoints={tempPoints}
@@ -510,10 +527,12 @@ function App() {
           theme={theme}
         />
 
-        <div 
-          className={`view-config glass-panel ${viewConfigExpanded ? 'expanded' : 'collapsed'}`}
-          onClick={() => !viewConfigExpanded && setViewConfigExpanded(true)}
-        >
+        <div style={{ position: 'absolute', top: '24px', left: '24px', zIndex: 10, display: 'flex', alignItems: 'flex-start', gap: '16px' }}>
+          <div 
+            className={`view-config glass-panel ${viewConfigExpanded ? 'expanded' : 'collapsed'}`}
+            style={{ position: 'relative', top: 0, left: 0 }}
+            onClick={() => !viewConfigExpanded && setViewConfigExpanded(true)}
+          >
           <div className="view-config-header" onClick={(e) => {
             if (viewConfigExpanded) {
               e.stopPropagation();
@@ -670,6 +689,34 @@ function App() {
               </div>
             </div>
           )}
+        </div>
+
+          <div className="gender-toggle glass-panel" style={{ display: 'flex', padding: '4px', gap: '4px', borderRadius: '26px', height: '52px', alignItems: 'center' }}>
+            <button 
+              className={`btn`}
+              style={{ 
+                padding: '0', height: '44px', width: '44px', borderRadius: '22px', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                background: modelPath === '/new-rigg.glb' ? 'var(--accent-primary)' : 'transparent', 
+                color: modelPath === '/new-rigg.glb' ? 'white' : 'var(--text-secondary)' 
+              }}
+              onClick={() => handleGenderSwitch('/new-rigg.glb')}
+              title="Female Model"
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="10" r="6"/><line x1="12" y1="16" x2="12" y2="22"/><line x1="9" y1="19" x2="15" y2="19"/></svg>
+            </button>
+            <button 
+              className={`btn`}
+              style={{ 
+                padding: '0', height: '44px', width: '44px', borderRadius: '22px', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                background: modelPath === '/MaleMesh.glb' ? 'var(--accent-primary)' : 'transparent', 
+                color: modelPath === '/MaleMesh.glb' ? 'white' : 'var(--text-secondary)' 
+              }}
+              onClick={() => handleGenderSwitch('/MaleMesh.glb')}
+              title="Male Model"
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="10" cy="14" r="6"/><line x1="14.24" y1="9.76" x2="21" y2="3"/><line x1="15" y1="3" x2="21" y2="3"/><line x1="21" y1="9" x2="21" y2="3"/></svg>
+            </button>
+          </div>
         </div>
       </div>
 
