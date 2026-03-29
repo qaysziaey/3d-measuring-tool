@@ -7,7 +7,7 @@ import * as THREE from 'three';
 import { CircleDashed } from 'lucide-react';
 
 // Generates a responsive bounding Ring perfectly sized over hovering slices
-function ContourRing({ id, center, radius, label, color = "#56a432", showLabel = true, unit = 'cm', onSelect, normal = [0, 1, 0], active = false }) {
+function ContourRing({ id, center, radius, label, color = "#56a432", showLabel = true, unit = 'cm', onSelect, normal = [0, 1, 0], active = false, labelScale = 1.0 }) {
   if (!center) return null;
 
   const formatLabel = (val) => {
@@ -58,9 +58,9 @@ function ContourRing({ id, center, radius, label, color = "#56a432", showLabel =
                 color: 'white',
                 background: active ? 'var(--accent-primary)' : 'rgba(0,0,0,0.6)',
                 backdropFilter: 'blur(10px)',
-                padding: '4px 10px',
-                borderRadius: '20px',
-                fontSize: '9px',
+                padding: `${4 * labelScale}px ${10 * labelScale}px`,
+                borderRadius: `${12 * labelScale}px`,
+                fontSize: `${10 * labelScale}px`,
                 fontWeight: '700',
                 whiteSpace: 'nowrap',
                 pointerEvents: 'none',
@@ -110,6 +110,7 @@ export function CanvasContainer({
   modelPos,
   unit = 'cm',
   cameraTargetY = 0,
+  labelScale = 1.0,
   onSelectMeasurement,
   isTransparent,
   theme = 'light' 
@@ -268,6 +269,7 @@ export function CanvasContainer({
             label={`${m.name}: ${format3DLabel(m.value)}`} 
             color="#3b82f6" 
             showLabel={showLabels}
+            labelScale={labelScale}
             onClick={() => onSelectMeasurement(m.id)}
           />
         );
@@ -287,6 +289,7 @@ export function CanvasContainer({
              color="#14b8a6"
              showLabel={showLabels}
              unit={unit}
+             labelScale={labelScale}
              onSelect={onSelectMeasurement}
           />
         );
@@ -294,7 +297,7 @@ export function CanvasContainer({
       
       {/* Dynamic Procedural Hover Math rendering */}
       {activeIsCurve && hoverData && tempPoints.length === 0 && (
-          <ContourRing center={hoverData.center} radius={hoverData.radius} showLabel={showLabels} unit={unit} />
+          <ContourRing center={hoverData.center} radius={hoverData.radius} showLabel={showLabels} unit={unit} labelScale={labelScale} />
       )}
       
       {tempPoints && <CursorFollower tempPoints={tempPoints} />}

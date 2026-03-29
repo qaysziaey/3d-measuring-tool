@@ -2,7 +2,7 @@ import React, { useMemo } from 'react';
 import { Line, Html } from '@react-three/drei';
 import * as THREE from 'three';
 
-export function MeasurementLine({ start, end, label, color = '#56a432', active = false, showLabel = true, onClick }) {
+export function MeasurementLine({ start, end, label, color = '#56a432', active = false, showLabel = true, onClick, labelScale = 1.0 }) {
   const distance = useMemo(() => {
     if (!start || !end) return 0;
     const p1 = new THREE.Vector3(...start);
@@ -54,9 +54,9 @@ export function MeasurementLine({ start, end, label, color = '#56a432', active =
                     color: 'white',
                     background: active ? 'var(--accent-primary)' : 'rgba(0,0,0,0.6)',
                     backdropFilter: 'blur(10px)',
-                    padding: '4px 10px',
-                    borderRadius: '20px',
-                    fontSize: '9px',
+                    padding: `${3 * labelScale}px ${8 * labelScale}px`,
+                    borderRadius: `${12 * labelScale}px`,
+                    fontSize: `${10 * labelScale}px`,
                     fontWeight: '700',
                     whiteSpace: 'nowrap',
                     pointerEvents: 'none',

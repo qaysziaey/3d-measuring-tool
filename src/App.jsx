@@ -4,6 +4,173 @@ import { Ruler, CheckCircle, RotateCcw, CircleDashed, Lock, Unlock, Settings2, P
 import * as THREE from 'three';
 import './App.css';
 
+const translations = {
+  en: {
+    title: "Anthropometric Workstation",
+    description: "Surgical-grade 3D measurement suite for clinical body analysis and data extraction.",
+    status_idle: "Select a section below to begin analysis",
+    status_capturing: "Capturing...",
+    status_awaiting: "Awaiting Data",
+    status_ready: "Scan Ready",
+    generate_report: "Create Report",
+    label_size: "Label Size",
+    modal_title: "Spatial Identity Report",
+    modal_desc: "Comprehensive biometric data extracted from clinical 3D reconstruction.",
+    export_json: "Export Clinical JSON",
+    reset_system: "Reset System",
+    manual_override: "Manual Override",
+    calibration: "Calibration",
+    axis_x: "Axis X",
+    axis_y: "Axis Y",
+    axis_z: "Axis Z",
+    recalibrate: "Recalibrate Point",
+    view_config: "View Configuration",
+    model_transform: "Model Transform",
+    camera_orbit: "Camera & Orbit",
+    perspectives: "Perspectives",
+    visibility_units: "Visibility & Units",
+    scale: "Scale",
+    pos_x: "Pos X",
+    pos_y: "Pos Y",
+    pos_z: "Pos Z",
+    zoom: "Zoom",
+    orbit: "Orbit",
+    tilt: "Tilt",
+    labels: "Labels",
+    xray: "X-Ray",
+    unit: "Unit",
+    language: "Language",
+    front: "Front",
+    back: "Back",
+    right: "Right",
+    left: "Left",
+    categories: {
+      torso: "Torso & Core",
+      arms: "Arms",
+      legs: "Legs",
+      hands_feet: "Hands & Feet",
+      head_face: "Head & Face"
+    },
+    measurements: {
+      cf: "Center Front Length",
+      cb: "Center Back Length",
+      rise: "Total Rise",
+      shoulder: "Across Shoulder",
+      hps_apex: "HPS to Apex",
+      neck: "Neck Girth",
+      chest: "Full Bust / Chest",
+      waist: "Waist",
+      belly: "Belly",
+      hip: "Full Hip",
+      armhole: "Armhole Straight",
+      leftBicep: "Left Bicep",
+      rightBicep: "Right Bicep",
+      leftElbow: "Left Elbow",
+      rightElbow: "Right Elbow",
+      leftWrist: "Left Wrist",
+      rightWrist: "Right Wrist",
+      leftThigh: "Left Thigh",
+      rightThigh: "Right Thigh",
+      leftKnee: "Left Knee",
+      rightKnee: "Right Knee",
+      leftCalf: "Left Calf",
+      rightCalf: "Right Calf",
+      leftAnkle: "Left Ankle",
+      rightAnkle: "Right Ankle",
+      leftHand: "Left Hand Length",
+      rightHand: "Right Hand Length",
+      leftFootLen: "Left Foot Length",
+      rightFootLen: "Right Foot Length",
+      leftFootHeight: "Left Foot Height",
+      rightFootHeight: "Right Foot Height",
+      headCirc: "Head Circumference",
+      faceLen: "Total Face Length"
+    }
+  },
+  de: {
+    title: "Anthropometrische Workstation",
+    description: "Chirurgische 3D-Mess-Suite für klinische Körperanalyse und Datenextraktion.",
+    status_idle: "Wählen Sie unten einen Abschnitt aus, um die Analyse zu starten",
+    status_capturing: "Erfassung...",
+    status_awaiting: "Warte auf Daten",
+    status_ready: "Scan bereit",
+    generate_report: "Bericht erstellen",
+    label_size: "Etikett-Größe",
+    modal_title: "Räumlicher Identitätsbericht",
+    modal_desc: "Umfassende biometrische Daten, extrahiert aus klinischer 3D-Rekonstruktion.",
+    export_json: "Klinisches JSON exportieren",
+    reset_system: "System zurücksetzen",
+    manual_override: "Manueller Override",
+    calibration: "Kalibrierung",
+    axis_x: "Achse X",
+    axis_y: "Achse Y",
+    axis_z: "Achse Z",
+    recalibrate: "Punkt rekalibrieren",
+    view_config: "Ansichtskonfiguration",
+    model_transform: "Modell-Transformation",
+    camera_orbit: "Kamera & Orbit",
+    perspectives: "Perspektiven",
+    visibility_units: "Sichtbarkeit & Einheiten",
+    scale: "Skalierung",
+    pos_x: "Pos X",
+    pos_y: "Pos Y",
+    pos_z: "Pos Z",
+    zoom: "Zoom",
+    orbit: "Orbit",
+    tilt: "Neigung",
+    labels: "Beschriftungen",
+    xray: "Röntgen",
+    unit: "Einheit",
+    language: "Sprache",
+    front: "Vorne",
+    back: "Hinten",
+    right: "Rechts",
+    left: "Links",
+    categories: {
+      torso: "Torso & Rumpf",
+      arms: "Arme",
+      legs: "Beine",
+      hands_feet: "Hände & Füße",
+      head_face: "Kopf & Gesicht"
+    },
+    measurements: {
+      cf: "Vordere Mittellänge",
+      cb: "Hintere Mittellänge",
+      rise: "Gesamte Leibhöhe",
+      shoulder: "Schulterbreite",
+      hps_apex: "HPS zu Apex",
+      neck: "Halsumfang",
+      chest: "Brustumfang",
+      waist: "Taille",
+      belly: "Bauchumfang",
+      hip: "Hüftumfang",
+      armhole: "Armloch gerade",
+      leftBicep: "Linker Bizeps",
+      rightBicep: "Rechter Bizeps",
+      leftElbow: "Linker Ellbogen",
+      rightElbow: "Rechter Ellbogen",
+      leftWrist: "Linkes Handgelenk",
+      rightWrist: "Rechtes Handgelenk",
+      leftThigh: "Linker Oberschenkel",
+      rightThigh: "Rechter Oberschenkel",
+      leftKnee: "Linkes Knie",
+      rightKnee: "Rechtes Knie",
+      leftCalf: "Linke Wade",
+      rightCalf: "Rechte Wade",
+      leftAnkle: "Linker Knöchel",
+      rightAnkle: "Rechter Knöchel",
+      leftHand: "Linke Handlänge",
+      rightHand: "Rechte Handlänge",
+      leftFootLen: "Linke Fußlänge",
+      rightFootLen: "Rechte Fußlänge",
+      leftFootHeight: "Linke Fußhöhe",
+      rightFootHeight: "Rechte Fußhöhe",
+      headCirc: "Kopfumfang",
+      faceLen: "Gesamte Gesichtslänge"
+    }
+  }
+};
+
 // All schema items now possess `.targetBones` securely mapping them specifically to standard Mixamo Rig properties
 const initialMeasurements = [
   // Torso / Core Distances
@@ -56,10 +223,11 @@ function App() {
   const [measurements, setMeasurements] = useState(initialMeasurements);
   const [activeId, setActiveId] = useState(null);
   const [activeEditId, setActiveEditId] = useState(null);
+  const [labelScale, setLabelScale] = useState(1.0);
   
-  // Initialize all categories as collapsed by default
+  // Initialize all categories as collapsed by default - use internal keys
   const [collapsedCategories, setCollapsedCategories] = useState(() => {
-    const cats = [...new Set(initialMeasurements.map(m => m.category))];
+    const cats = ['torso', 'arms', 'legs', 'hands_feet', 'head_face'];
     return cats.reduce((acc, cat) => ({ ...acc, [cat]: true }), {});
   });
 
@@ -76,14 +244,22 @@ function App() {
   const [showSummary, setShowSummary] = useState(false);
   const [isTransparent, setIsTransparent] = useState(false); 
   const [theme, setTheme] = useState(() => localStorage.getItem('theme') || 'light');
+  const [lang, setLang] = useState(() => localStorage.getItem('lang') || 'en');
   const [viewConfigExpanded, setViewConfigExpanded] = useState(false);
   const [modelScale, setModelScale] = useState(1.8);
   const [zoom, setZoom] = useState(8);
+
+  const t = translations[lang];
 
   const toggleTheme = () => {
     const newTheme = theme === 'light' ? 'dark' : 'light';
     setTheme(newTheme);
     localStorage.setItem('theme', newTheme);
+  };
+
+  const toggleLang = (l) => {
+    setLang(l);
+    localStorage.setItem('lang', l);
   };
 
   const activeMeasurement = measurements.find(m => m.id === activeId);
@@ -95,15 +271,15 @@ function App() {
     setActiveEditId(null);
   };
 
-  const toggleCategory = (category) => {
-    const isOpening = !!collapsedCategories[category];
-    setCollapsedCategories(prev => ({ ...prev, [category]: !prev[category] }));
+  const toggleCategory = (catKey) => {
+    const isOpening = !!collapsedCategories[catKey];
+    setCollapsedCategories(prev => ({ ...prev, [catKey]: !prev[catKey] }));
     if (isOpening) {
-      if (category === 'Torso & Core') setCameraTargetY(0.5);
-      if (category === 'Arms') setCameraTargetY(0.5);
-      if (category === 'Legs') setCameraTargetY(-1.2);
-      if (category === 'Hands & Feet') setCameraTargetY(-1.6);
-      if (category === 'Head & Face') setCameraTargetY(1.4);
+      if (catKey === 'torso') setCameraTargetY(0.5);
+      if (catKey === 'arms') setCameraTargetY(0.5);
+      if (catKey === 'legs') setCameraTargetY(-1.2);
+      if (catKey === 'hands_feet') setCameraTargetY(-1.6);
+      if (catKey === 'head_face') setCameraTargetY(1.4);
     }
   };
 
@@ -300,9 +476,9 @@ function App() {
     <div className="fine-tune-row">
       <span style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>{label}</span>
       <div className="fine-tune-controls">
-        <button className="tune-btn" onClick={() => method(id, axis === 'size' ? null : axis, -1)}><Minus size={14} /></button>
-        <span className="tune-label">{axis === 'size' ? 'Scale' : `Pos ${axis.toUpperCase()}`}</span>
-        <button className="tune-btn" onClick={() => method(id, axis === 'size' ? null : axis, 1)}><Plus size={14} /></button>
+        <button className="tune-btn" onClick={() => method(id, axis === 'size' ? null : axis, -1)} aria-label="Decrease"><Minus size={14} /></button>
+        <span className="tune-label">{axis === 'size' ? t.scale : `${t.unit === 'mm' ? 'Pos' : 'Achse'} ${axis.toUpperCase()}`}</span>
+        <button className="tune-btn" onClick={() => method(id, axis === 'size' ? null : axis, 1)} aria-label="Increase"><Plus size={14} /></button>
       </div>
     </div>
   );
@@ -323,6 +499,7 @@ function App() {
           showLabels={showLabels}
           modelScale={modelScale}
           zoom={zoom}
+          labelScale={labelScale}
           modelPos={modelPos}
           unit={unit}
           cameraTargetY={cameraTargetY}
@@ -351,54 +528,59 @@ function App() {
           {viewConfigExpanded && (
             <div className="view-config-body fade-in">
               <div className="config-group">
-                <div className="group-title">Model Transform</div>
+                <div className="group-title">{t.model_transform}</div>
                 <div className="config-row">
-                  <span className="config-label">Scale</span>
+                  <span className="config-label">{t.scale}</span>
                   <input
                     type="range" min="1" max="4" step="0.1"
                     value={modelScale}
                     onChange={(e) => setModelScale(parseFloat(e.target.value))}
                   />
-                  <span className="config-value">{modelScale.toFixed(1)}x</span>
+                  <div className="config-value">{modelScale.toFixed(1)}x</div>
+                  <div></div>
                 </div>
                 <div className="config-row">
-                  <span className="config-label">Pos X</span>
+                  <span className="config-label">{t.pos_x}</span>
                   <input 
                     type="range" min="-5" max="5" step="0.1" 
                     value={modelPos.x} 
                     onChange={(e) => setModelPos(prev => ({ ...prev, x: parseFloat(e.target.value) }))} 
                   />
-                  <span className="config-value">{modelPos.x.toFixed(1)}</span>
+                  <div className="config-value">{modelPos.x.toFixed(1)}</div>
+                  <div></div>
                 </div>
                 <div className="config-row">
-                  <span className="config-label">Pos Y</span>
+                  <span className="config-label">{t.pos_y}</span>
                   <input 
                     type="range" min="-10" max="10" step="0.1" 
                     value={modelPos.y} 
                     onChange={(e) => setModelPos(prev => ({ ...prev, y: parseFloat(e.target.value) }))} 
                   />
-                  <span className="config-value">{modelPos.y.toFixed(1)}</span>
+                  <div className="config-value">{modelPos.y.toFixed(1)}</div>
+                  <div></div>
                 </div>
               </div>
 
               <div className="config-group">
-                <div className="group-title">Camera & Orbit</div>
+                <div className="group-title">{t.camera_orbit}</div>
                 <div className="config-row">
-                  <span className="config-label">Zoom</span>
+                  <span className="config-label">{t.zoom}</span>
                   <input
                     type="range" min="3" max="25" step="0.1"
                     value={zoom}
                     onChange={(e) => setZoom(parseFloat(e.target.value))}
                   />
-                  <span className="config-value">{zoom.toFixed(1)}m</span>
+                  <div className="config-value">{zoom.toFixed(1)}m</div>
+                  <div></div>
                 </div>
                 <div className="config-row">
-                  <span className="config-label">Orbit</span>
+                  <span className="config-label">{t.orbit}</span>
                   <input 
                     type="range" min={-Math.PI} max={Math.PI} step="0.01" 
                     value={horizRotation} 
                     onChange={(e) => setHorizRotation(parseFloat(e.target.value))} 
                   />
+                  <div className="config-value">{(horizRotation * 180 / Math.PI).toFixed(0)}°</div>
                   <button 
                     className={`lock-axis-btn ${lockState.horiz ? 'locked' : ''}`}
                     onClick={() => toggleLock('horiz')}
@@ -407,12 +589,13 @@ function App() {
                   </button>
                 </div>
                 <div className="config-row">
-                  <span className="config-label">Tilt</span>
+                  <span className="config-label">{t.tilt}</span>
                   <input 
                     type="range" min="0" max={Math.PI} step="0.01" 
                     value={vertRotation} 
                     onChange={(e) => setVertRotation(parseFloat(e.target.value))} 
                   />
+                  <div className="config-value">{(vertRotation * 180 / Math.PI).toFixed(0)}°</div>
                   <button 
                     className={`lock-axis-btn ${lockState.vert ? 'locked' : ''}`}
                     onClick={() => toggleLock('vert')}
@@ -423,38 +606,51 @@ function App() {
               </div>
 
               <div className="config-group">
-                <div className="group-title">Perspectives</div>
+                <div className="group-title">{t.perspectives}</div>
                 <div className="viewpoint-grid">
-                  <button className="viewpoint-btn" onClick={() => setViewpoint(0, Math.PI / 2)}>Front</button>
-                  <button className="viewpoint-btn" onClick={() => setViewpoint(Math.PI, Math.PI / 2)}>Back</button>
-                  <button className="viewpoint-btn" onClick={() => setViewpoint(Math.PI / 2, Math.PI / 2)}>Right</button>
-                  <button className="viewpoint-btn" onClick={() => setViewpoint(-Math.PI / 2, Math.PI / 2)}>Left</button>
+                  <button className="viewpoint-btn" onClick={() => setViewpoint(0, Math.PI / 2)}>{t.front}</button>
+                  <button className="viewpoint-btn" onClick={() => setViewpoint(Math.PI, Math.PI / 2)}>{t.back}</button>
+                  <button className="viewpoint-btn" onClick={() => setViewpoint(Math.PI / 2, Math.PI / 2)}>{t.right}</button>
+                  <button className="viewpoint-btn" onClick={() => setViewpoint(-Math.PI / 2, Math.PI / 2)}>{t.left}</button>
                 </div>
               </div>
 
               <div className="config-group">
-                <div className="group-title">Visibility & Units</div>
+                <div className="group-title">{t.visibility_units}</div>
                 <div className="config-row">
-                  <span className="config-label">Labels</span>
-                  <button 
-                    className={`lock-axis-btn ${showLabels ? 'locked' : ''}`}
-                    onClick={() => setShowLabels(!showLabels)}
-                  >
-                    {showLabels ? <Eye size={14} /> : <EyeOff size={14} />}
-                  </button>
+                  <span className="config-label">{t.labels}</span>
+                  <div className="unit-toggle" style={{ gridColumn: '2 / 5' }}>
+                    <button className={`unit-btn ${showLabels ? 'active' : ''}`} onClick={() => setShowLabels(true)}><Eye size={12} /></button>
+                    <button className={`unit-btn ${!showLabels ? 'active' : ''}`} onClick={() => setShowLabels(false)}><EyeOff size={12} /></button>
+                  </div>
                 </div>
                 <div className="config-row">
-                  <span className="config-label">X-Ray</span>
-                  <button 
-                    className={`lock-axis-btn ${isTransparent ? 'locked' : ''}`}
-                    onClick={() => setIsTransparent(!isTransparent)}
-                  >
-                    <Ghost size={14} />
-                  </button>
+                  <span className="config-label">{t.label_size}</span>
+                  <input
+                    type="range" min="0.5" max="2" step="0.1"
+                    value={labelScale}
+                    onChange={(e) => setLabelScale(parseFloat(e.target.value))}
+                  />
+                  <div className="config-value">{labelScale.toFixed(1)}x</div>
+                  <div></div>
                 </div>
                 <div className="config-row">
-                  <span className="config-label">Unit</span>
-                  <div className="unit-toggle">
+                  <span className="config-label">{t.xray}</span>
+                  <div className="unit-toggle" style={{ gridColumn: '2 / 5' }}>
+                    <button className={`unit-btn ${isTransparent ? 'active' : ''}`} onClick={() => setIsTransparent(true)}><Eye size={12} /></button>
+                    <button className={`unit-btn ${!isTransparent ? 'active' : ''}`} onClick={() => setIsTransparent(false)}><EyeOff size={12} /></button>
+                  </div>
+                </div>
+                <div className="config-row">
+                  <span className="config-label">{t.language}</span>
+                  <div className="unit-toggle" style={{ gridColumn: '2 / 5' }}>
+                    <button className={`unit-btn ${lang === 'en' ? 'active' : ''}`} onClick={() => toggleLang('en')}>EN</button>
+                    <button className={`unit-btn ${lang === 'de' ? 'active' : ''}`} onClick={() => toggleLang('de')}>DE</button>
+                  </div>
+                </div>
+                <div className="config-row">
+                  <span className="config-label">{t.unit}</span>
+                  <div className="unit-toggle" style={{ gridColumn: '2 / 5' }}>
                     <button className={`unit-btn ${unit === 'cm' ? 'active' : ''}`} onClick={() => setUnit('cm')}>CM</button>
                     <button className={`unit-btn ${unit === 'mm' ? 'active' : ''}`} onClick={() => setUnit('mm')}>MM</button>
                   </div>
@@ -497,8 +693,8 @@ function App() {
               {theme === 'light' ? <Moon size={20} /> : <Sun size={20} />}
             </button>
           </div>
-          <h1>Anthropometric Workstation</h1>
-          <p>Surgical-grade 3D measurement suite for clinical body analysis and data extraction.</p>
+          <h1>{t.title}</h1>
+          <p>{t.description}</p>
         </div>
 
         <div className={`status-indicator ${activeId ? 'measuring' : ''}`} style={{ marginBottom: '20px' }}>
@@ -506,21 +702,33 @@ function App() {
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
               <div className="pulse-indicator" style={{ width: '8px', height: '8px', borderRadius: '50%', background: 'var(--accent-primary)' }} />
               {activeMeasurement.type === 'circumference'
-                ? <span>Select <strong>3 points</strong> for {activeMeasurement.name} ({tempPoints.length}/3)</span>
-                : <span>Click <strong>{tempPoints.length === 0 ? 'START' : 'END'}</strong> coordinate on model</span>
+                ? <span>{lang === 'en' ? `Select 3 points for ${t.measurements[activeId]} (3/${tempPoints.length})` : `Wählen Sie 3 Punkte für ${t.measurements[activeId]} (${tempPoints.length}/3)`}</span>
+                : <span>{lang === 'en' ? `Click ${tempPoints.length === 0 ? 'START' : 'END'} coordinate on model` : `Klicken Sie auf den ${tempPoints.length === 0 ? 'START' : 'END'}-Punkt auf dem Modell`}</span>
               }
             </div>
           ) : (
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
               <CircleDashed size={14} />
-              <span>Select a section below to begin analysis</span>
+              <span>{t.status_idle}</span>
             </div>
           )}
         </div>
 
         <div className="measurement-list" style={{ flex: 1 }}>
-          {categories.map(category => (
-            <div key={category} style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '16px' }}>
+          {Object.keys(t.categories).map(catKey => {
+            const categoryLabel = t.categories[catKey];
+            const catMeasurements = measurements.filter(m => {
+              // Map the initial category name to the translated key
+              if (catKey === 'torso') return m.category === 'Torso & Core';
+              if (catKey === 'arms') return m.category === 'Arms';
+              if (catKey === 'legs') return m.category === 'Legs';
+              if (catKey === 'hands_feet') return m.category === 'Hands & Feet';
+              if (catKey === 'head_face') return m.category === 'Head & Face';
+              return false;
+            });
+
+            return (
+            <div key={catKey} style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '16px' }}>
               <div
                 className="category-header"
                 style={{ 
@@ -530,7 +738,7 @@ function App() {
                   alignItems: 'center',
                   padding: '4px 8px'
                 }}
-                onClick={() => toggleCategory(category)}
+                onClick={() => toggleCategory(catKey)}
               >
                 <div style={{ 
                   display: 'flex', 
@@ -542,14 +750,14 @@ function App() {
                   letterSpacing: '0.1em',
                   color: 'var(--text-secondary)'
                 }}>
-                  {category}
+                  {categoryLabel}
                 </div>
-                {collapsedCategories[category] ? <ChevronDown size={14} color="var(--text-secondary)" /> : <ChevronUp size={14} color="var(--text-secondary)" />}
+                {collapsedCategories[catKey] ? <ChevronDown size={14} color="var(--text-secondary)" /> : <ChevronUp size={14} color="var(--text-secondary)" />}
               </div>
 
-              {!collapsedCategories[category] && (
+              {!collapsedCategories[catKey] && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                  {measurements.filter(m => m.category === category).map(item => (
+                  {catMeasurements.map(item => (
                     <div
                       key={item.id}
                       id={`item-${item.id}`}
@@ -560,10 +768,10 @@ function App() {
                           <div className="measurement-info" style={{ flex: 1 }} onClick={() => handleSelectTask(item.id)}>
                             <div className="measurement-name" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                               {item.completed ? <CheckCircle size={14} color="var(--accent-primary)" /> : <CircleDashed size={14} color="var(--text-secondary)" />}
-                              {item.name}
+                              {t.measurements[item.id]}
                             </div>
                             <div style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '2px' }}>
-                              {item.completed ? 'Scan Ready' : (activeId === item.id ? 'Capturing...' : 'Awaiting Data')}
+                              {item.completed ? t.status_ready : (activeId === item.id ? t.status_capturing : t.status_awaiting)}
                             </div>
                           </div>
                           
@@ -598,7 +806,7 @@ function App() {
                         {activeEditId === item.id && (
                           <div className="fine-tune-panel fade-in" style={{ marginTop: '16px', paddingTop: '16px', borderTop: '1px solid var(--border-light)' }}>
                             <div className="tune-row" style={{ marginBottom: '12px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                              <span style={{ fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', color: 'var(--text-secondary)' }}>Manual Override</span>
+                              <span style={{ fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', color: 'var(--text-secondary)' }}>{t.manual_override}</span>
                               <input 
                                 type="text"
                                 value={item.value || ''}
@@ -619,17 +827,17 @@ function App() {
                               />
                             </div>
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                              {renderTuneRow('Calibration', 'size', item.id, (id, _, dir) => handleSizeTune(id, dir, item.type))}
-                              {renderTuneRow('Axis X', 'x', item.id, handleMoveTune)}
-                              {renderTuneRow('Axis Y', 'y', item.id, handleMoveTune)}
-                              {renderTuneRow('Axis Z', 'z', item.id, handleMoveTune)}
+                              {renderTuneRow(t.calibration, 'size', item.id, (id, _, dir) => handleSizeTune(id, dir, item.type))}
+                              {renderTuneRow(t.axis_x, 'x', item.id, handleMoveTune)}
+                              {renderTuneRow(t.axis_y, 'y', item.id, handleMoveTune)}
+                              {renderTuneRow(t.axis_z, 'z', item.id, handleMoveTune)}
                             </div>
                             <button 
                               className="btn btn-outline" 
                               onClick={() => handleResetMeasurement(item.id)}
                               style={{ width: '100%', marginTop: '16px', fontSize: '11px', background: 'transparent', border: '1px solid var(--border-medium)', color: 'var(--text-secondary)', padding: '8px', borderRadius: '10px' }}
                             >
-                              <RotateCcw size={12} style={{ marginRight: '6px' }} /> Recalibrate Point
+                              <RotateCcw size={12} style={{ marginRight: '6px' }} /> {t.recalibrate}
                             </button>
                           </div>
                         )}
@@ -639,7 +847,8 @@ function App() {
                 </div>
               )}
             </div>
-          ))}
+            );
+          })}
         </div>
 
         <button
@@ -654,7 +863,7 @@ function App() {
           disabled={!measurements.some(m => m.completed)}
           onClick={() => setShowSummary(true)}
         >
-          <Maximize size={18} style={{ marginRight: '8px' }} strokeWidth={2.5} /> Generate Full Bio-Report
+          <Maximize size={18} style={{ marginRight: '8px' }} strokeWidth={2.5} /> {t.generate_report}
         </button>
       </div>
 
@@ -664,8 +873,8 @@ function App() {
             <div className="modal-header" style={{ marginBottom: '32px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                 <div>
-                  <h2 style={{ fontSize: '28px', marginBottom: '8px' }}>Spatial Identity Report</h2>
-                  <p style={{ color: 'var(--text-secondary)' }}>Comprehensive biometric data extracted from clinical 3D reconstruction.</p>
+                  <h2 style={{ fontSize: '28px', marginBottom: '8px' }}>{t.modal_title}</h2>
+                  <p style={{ color: 'var(--text-secondary)' }}>{t.modal_desc}</p>
                 </div>
                 <button 
                   onClick={() => setShowSummary(false)} 
@@ -677,20 +886,29 @@ function App() {
             </div>
 
             <div className="results-list" style={{ flex: 1, overflowY: 'auto', paddingRight: '12px', marginBottom: '32px' }}>
-              {categories.map(category => {
-                const results = measurements.filter(m => m.category === category && m.completed);
+              {Object.keys(t.categories).map(catKey => {
+                const categoryLabel = t.categories[catKey];
+                const results = measurements.filter(m => {
+                  if (catKey === 'torso') return m.category === 'Torso & Core' && m.completed;
+                  if (catKey === 'arms') return m.category === 'Arms' && m.completed;
+                  if (catKey === 'legs') return m.category === 'Legs' && m.completed;
+                  if (catKey === 'hands_feet') return m.category === 'Hands & Feet' && m.completed;
+                  if (catKey === 'head_face') return m.category === 'Head & Face' && m.completed;
+                  return false;
+                });
+
                 if (results.length === 0) return null;
                 return (
-                  <div key={`modal-${category}`} style={{ marginBottom: '24px' }}>
+                  <div key={`modal-${catKey}`} style={{ marginBottom: '24px' }}>
                     <div style={{ fontSize: '11px', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--text-secondary)', marginBottom: '12px', borderBottom: '1px solid var(--border-light)', paddingBottom: '4px' }}>
-                      {category}
+                      {categoryLabel}
                     </div>
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                       {results.map(item => (
                         <div key={item.id} style={{ background: 'var(--bg-app)', padding: '16px', borderRadius: '16px', border: '1px solid var(--border-light)' }}>
                           <div style={{ fontSize: '12px', color: 'var(--text-secondary)', marginBottom: '6px', display: 'flex', alignItems: 'center', gap: '6px' }}>
                             {item.type === 'circumference' ? <CircleDashed size={10} /> : <Ruler size={10} />}
-                            {item.name}
+                            {t.measurements[item.id]}
                           </div>
                           <div style={{ fontSize: '22px', fontWeight: 800, color: 'var(--accent-primary)', fontFamily: 'SF Mono, monospace' }}>
                             {formatValue(item.value)}
@@ -706,14 +924,14 @@ function App() {
 
             <div style={{ display: 'flex', gap: '12px' }}>
               <button className="btn btn-primary" style={{ flex: 2, padding: '14px' }} onClick={handleExportJSON}>
-                <Download size={18} style={{ marginRight: '8px' }} /> Export Clinical JSON
+                <Download size={18} style={{ marginRight: '8px' }} /> {t.export_json}
               </button>
               <button 
                 className="btn" 
                 style={{ flex: 1, background: 'var(--border-light)', color: 'var(--text-main)', padding: '14px' }} 
                 onClick={handleReset}
               >
-                <RotateCcw size={16} style={{ marginRight: '8px' }} /> Reset System
+                <RotateCcw size={16} style={{ marginRight: '8px' }} /> {t.reset_system}
               </button>
             </div>
           </div>
