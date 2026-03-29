@@ -248,6 +248,7 @@ function App() {
   const [viewConfigExpanded, setViewConfigExpanded] = useState(false);
   const [modelScale, setModelScale] = useState(1.8);
   const [zoom, setZoom] = useState(7); // Tighter zoom to reduce empty side space
+  const [ghostOpacity, setGhostOpacity] = useState(0.05);
 
   const t = translations[lang];
 
@@ -499,8 +500,9 @@ function App() {
           showLabels={showLabels}
           modelScale={modelScale}
           zoom={zoom}
-          labelScale={labelScale}
           modelPos={modelPos}
+          ghostOpacity={ghostOpacity}
+          labelScale={labelScale}
           unit={unit}
           cameraTargetY={cameraTargetY}
           onSelectMeasurement={handleSelectMeasurement}
@@ -537,6 +539,16 @@ function App() {
                     onChange={(e) => setModelScale(parseFloat(e.target.value))}
                   />
                   <div className="config-value">{modelScale.toFixed(1)}x</div>
+                  <div></div>
+                </div>
+                <div className="config-row">
+                  <span className="config-label" style={{ fontSize: '9px' }}>OPACITY</span>
+                  <input
+                    type="range" min="0" max="1" step="0.01"
+                    value={ghostOpacity}
+                    onChange={(e) => setGhostOpacity(parseFloat(e.target.value))}
+                  />
+                  <div className="config-value">{(ghostOpacity * 100).toFixed(0)}%</div>
                   <div></div>
                 </div>
                 <div className="config-row">

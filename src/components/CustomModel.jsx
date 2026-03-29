@@ -3,7 +3,7 @@ import { useGLTF, Outlines } from '@react-three/drei';
 import { createPortal } from '@react-three/fiber';
 import * as THREE from 'three';
 
-export function CustomModel({ onPointerDown, onPointerMove, onPointerOut, scale = 2.2, isTransparent = false }) {
+export function CustomModel({ onPointerDown, onPointerMove, onPointerOut, scale = 2.2, isTransparent = false, ghostOpacity = 0.05 }) {
   const { scene } = useGLTF('/new-rigg.glb');
 
   const meshes = useMemo(() => {
@@ -19,12 +19,12 @@ export function CustomModel({ onPointerDown, onPointerMove, onPointerOut, scale 
   useEffect(() => {
     meshes.forEach((child) => {
       child.material = new THREE.MeshStandardMaterial({
-        color: isTransparent ? '#f5f5f5' : '#9ca3af', // Smoke white
+        color: '#9ca3af', // Uniform base gray for both solid and ghost modes
         roughness: isTransparent ? 1.0 : 0.6, // Fully matte, no gloss
         metalness: isTransparent ? 0.0 : 0.1, // Zero metallic specs
         side: isTransparent ? THREE.FrontSide : THREE.DoubleSide, // No jiggling inner triangles
         transparent: isTransparent,
-        opacity: isTransparent ? 0.05 : 1, // Extremely low opacity, like faint smoke
+        opacity: isTransparent ? ghostOpacity : 1, // Wire dynamic UI slider
         depthWrite: !isTransparent
       });
       child.castShadow = !isTransparent;
@@ -51,9 +51,9 @@ export function CustomModel({ onPointerDown, onPointerMove, onPointerOut, scale 
       onPointerOut={onPointerOut}
     >
       <primitive object={scene} />
-      {meshes.map((mesh) => 
+      {!isTransparent && meshes.map((mesh) => 
         createPortal(
-          <Outlines thickness={0.0025} color={isTransparent ? "#4b5563" : "#ffd700"} opacity={1} angle={Math.PI} />, 
+          <Outlines thickness={0.0025} color="#ffd700" opacity={1} angle={Math.PI} />, 
           mesh
         )
       )}

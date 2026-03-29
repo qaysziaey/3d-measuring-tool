@@ -108,6 +108,7 @@ export function CanvasContainer({
   modelScale,
   zoom,
   modelPos,
+  ghostOpacity = 0.05,
   unit = 'cm',
   cameraTargetY = 0,
   labelScale = 1.0,
@@ -210,6 +211,7 @@ export function CanvasContainer({
             onPointerOut={handlePointerOut}
             modelPath="/new-rigg.glb" 
             scale={modelScale} 
+            ghostOpacity={ghostOpacity}
             isTransparent={isTransparent}
           />
         </group>
