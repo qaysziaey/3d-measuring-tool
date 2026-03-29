@@ -1,3 +1,4 @@
+import { Ruler } from 'lucide-react';
 import React, { useMemo } from 'react';
 import { Line, Html } from '@react-three/drei';
 import * as THREE from 'three';
@@ -49,21 +50,24 @@ export function MeasurementLine({ start, end, label, color = '#56a432', active =
           {showLabel && (
               <Html position={midPoint} center distanceFactor={8} zIndexRange={[100, 0]}>
                 <div 
-                  className="measurement-tag glass-panel"
+                  className="measurement-tag"
                   style={{
-                    color: 'white',
-                    background: active ? 'var(--accent-primary)' : 'rgba(0,0,0,0.6)',
-                    backdropFilter: 'blur(10px)',
-                    padding: `${3 * labelScale}px ${8 * labelScale}px`,
-                    borderRadius: `${12 * labelScale}px`,
-                    fontSize: `${10 * labelScale}px`,
-                    fontWeight: '700',
+                    color: active ? 'white' : 'black',
+                    background: active ? 'var(--accent-primary)' : 'white',
+                    padding: `${3 * labelScale}px`,
+                    borderRadius: `${4 * labelScale}px`,
+                    fontSize: `${7 * labelScale}px`, // tiny font
+                    fontWeight: 'normal',
                     whiteSpace: 'nowrap',
                     pointerEvents: 'none',
-                    border: active ? '1px solid rgba(255,255,255,0.4)' : '1px solid rgba(255,255,255,0.1)',
-                    boxShadow: '0 4px 12px rgba(0,0,0,0.2)'
+                    border: 'none', // Removed border
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: `${4 * labelScale}px`
                   }}
                 >
+                  <Ruler size={8 * labelScale} />
                   {label ? label : `${(distance * 15).toFixed(1)} cm`}
                 </div>
               </Html>

@@ -247,7 +247,7 @@ function App() {
   const [lang, setLang] = useState(() => localStorage.getItem('lang') || 'en');
   const [viewConfigExpanded, setViewConfigExpanded] = useState(false);
   const [modelScale, setModelScale] = useState(1.8);
-  const [zoom, setZoom] = useState(8);
+  const [zoom, setZoom] = useState(7); // Tighter zoom to reduce empty side space
 
   const t = translations[lang];
 
@@ -276,10 +276,10 @@ function App() {
     setCollapsedCategories(prev => ({ ...prev, [catKey]: !prev[catKey] }));
     if (isOpening) {
       if (catKey === 'torso') setCameraTargetY(0.5);
-      if (catKey === 'arms') setCameraTargetY(0.5);
-      if (catKey === 'legs') setCameraTargetY(-1.2);
-      if (catKey === 'hands_feet') setCameraTargetY(-1.6);
-      if (catKey === 'head_face') setCameraTargetY(1.4);
+      if (catKey === 'arms') setCameraTargetY(0.3);
+      if (catKey === 'legs') setCameraTargetY(-0.5); // Focus mid-leg, not under floor
+      if (catKey === 'hands_feet') setCameraTargetY(-1.0); // Focus just above floor
+      if (catKey === 'head_face') setCameraTargetY(1.2);
     }
   };
 

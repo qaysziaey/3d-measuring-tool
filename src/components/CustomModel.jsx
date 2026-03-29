@@ -19,12 +19,13 @@ export function CustomModel({ onPointerDown, onPointerMove, onPointerOut, scale 
   useEffect(() => {
     meshes.forEach((child) => {
       child.material = new THREE.MeshStandardMaterial({
-        color: '#9ca3af',
-        roughness: 0.6,
-        metalness: 0.1,
-        side: THREE.DoubleSide,
+        color: isTransparent ? '#f5f5f5' : '#9ca3af', // Smoke white
+        roughness: isTransparent ? 1.0 : 0.6, // Fully matte, no gloss
+        metalness: isTransparent ? 0.0 : 0.1, // Zero metallic specs
+        side: isTransparent ? THREE.FrontSide : THREE.DoubleSide, // No jiggling inner triangles
         transparent: isTransparent,
-        opacity: isTransparent ? 0.3 : 1
+        opacity: isTransparent ? 0.05 : 1, // Extremely low opacity, like faint smoke
+        depthWrite: !isTransparent
       });
       child.castShadow = !isTransparent;
       child.receiveShadow = !isTransparent;
