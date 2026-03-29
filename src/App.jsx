@@ -250,6 +250,7 @@ function App() {
   const [zoom, setZoom] = useState(7); // Tighter zoom to reduce empty side space
   const [ghostOpacity, setGhostOpacity] = useState(0.05);
   const [modelPath, setModelPath] = useState('/new-rigg.glb');
+  const [showGrid, setShowGrid] = useState(false);
 
   const handleGenderSwitch = (path) => {
     if (modelPath === path) return;
@@ -515,6 +516,7 @@ function App() {
           lockState={lockState}
           onCameraChange={handleCameraChange}
           showLabels={showLabels}
+          showGrid={showGrid}
           modelScale={modelScale}
           zoom={zoom}
           modelPos={modelPos}
@@ -653,6 +655,13 @@ function App() {
                   <div className="unit-toggle" style={{ gridColumn: '2 / 5' }}>
                     <button className={`unit-btn ${showLabels ? 'active' : ''}`} onClick={() => setShowLabels(true)}><Eye size={12} /></button>
                     <button className={`unit-btn ${!showLabels ? 'active' : ''}`} onClick={() => setShowLabels(false)}><EyeOff size={12} /></button>
+                  </div>
+                </div>
+                <div className="config-row">
+                  <span className="config-label">Grid</span>
+                  <div className="unit-toggle" style={{ gridColumn: '2 / 5' }}>
+                    <button className={`unit-btn ${showGrid ? 'active' : ''}`} onClick={() => setShowGrid(true)}>ON</button>
+                    <button className={`unit-btn ${!showGrid ? 'active' : ''}`} onClick={() => setShowGrid(false)}>OFF</button>
                   </div>
                 </div>
                 <div className="config-row">

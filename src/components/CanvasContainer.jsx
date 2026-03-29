@@ -105,6 +105,7 @@ export function CanvasContainer({
   lockState,
   onCameraChange,
   showLabels,
+  showGrid,
   modelPath,
   modelScale,
   zoom,
@@ -214,6 +215,7 @@ export function CanvasContainer({
             scale={modelScale} 
             ghostOpacity={ghostOpacity}
             isTransparent={isTransparent}
+            showGrid={showGrid}
           />
         </group>
       </Suspense>

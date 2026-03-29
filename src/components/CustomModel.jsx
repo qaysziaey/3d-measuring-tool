@@ -2,8 +2,9 @@ import React, { useEffect, useMemo } from 'react';
 import { useGLTF, Outlines } from '@react-three/drei';
 import { createPortal } from '@react-three/fiber';
 import * as THREE from 'three';
+import { BoundingBoxGrid } from './BoundingBoxGrid';
 
-export function CustomModel({ onPointerDown, onPointerMove, onPointerOut, scale = 2.2, isTransparent = false, ghostOpacity = 0.05, modelPath = '/new-rigg.glb' }) {
+export function CustomModel({ onPointerDown, onPointerMove, onPointerOut, scale = 2.2, isTransparent = false, ghostOpacity = 0.05, modelPath = '/new-rigg.glb', showGrid = false }) {
   const { scene } = useGLTF(modelPath);
 
   const meshes = useMemo(() => {
@@ -57,6 +58,8 @@ export function CustomModel({ onPointerDown, onPointerMove, onPointerOut, scale 
           mesh
         )
       )}
+      
+      {showGrid && <BoundingBoxGrid scene={scene} />}
     </group>
   );
 }
